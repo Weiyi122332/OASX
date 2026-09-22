@@ -203,7 +203,7 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ),
-            )
+            ),
           if (snapshot == null || snapshot.events.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 48),
