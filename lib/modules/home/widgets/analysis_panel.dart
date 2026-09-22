@@ -24,6 +24,9 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
   ScriptAnalysisSnapshot? _snapshot;
   Map<String, ScriptAnalysisSnapshot> _recentSnapshots = const {};
   String _error = '';
+  bool _errorLogs = false;
+  List<ScriptErrorLogItem> _errorItems = const [];
+  String? _errorId;
   bool _loading = true;
   bool _showClicks = true;
   bool _showSwipes = true;
@@ -50,6 +53,24 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
       _error = '';
     });
     try {
+      if (_errorLogs) {
+        final items = <ScriptErrorLogItem>[];
+        String? cursor;
+        do {
+          final page = await ApiClient().getScriptErrorLogs(
+            scriptName: widget.scriptName, cursor: cursor,
+          );
+          if (!mounted || revision != _revision) return;
+          items.addAll(page.items);
+          final next = page.nextCursor;
+          if (!page.hasMore || next == null || next == cursor) break;
+          cursor = next;
+        } while (true);
+        _errorItems = items;
+        _errorId = items.isEmpty ? null : items.first.id;
+        await _loadAnalysis(revision);
+        return;
+      }
       final response = await ApiClient().getScriptStatisticsDates(widget.scriptName);
       if (!mounted || revision != _revision) return;
       _dates = response.dates;
@@ -72,6 +93,40 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
       _error = '';
     });
     try {
+      if (_errorLogs) {
+        var result = const ScriptAnalysisSnapshot([]);
+        if (_errorId != null) {
+          final detail = await ApiClient().getScriptErrorLogDetail(
+            _errorId!, logLimitBytes: 1048576,
+          );
+          if (!mounted || revision != _revision) return;
+          final fallbackDate = detail.time.length >= 10
+              ? detail.time.substring(0, 10)
+              : DateFormat('yyyy-MM-dd').format(
+                  DateTime.fromMillisecondsSinceEpoch(detail.timestampMs));
+          final lines = <ScriptLogLine>[];
+          var date = fallbackDate;
+          for (final text in detail.log.content.split('\n')) {
+            final match = RegExp(r'^(\d{4}-\d{2}-\d{2}) ').firstMatch(text);
+            if (match != null) date = match.group(1)!;
+            lines.add(ScriptLogLine(
+              fileName: '${date}_error.txt', lineNo: lines.length + 1,
+              offset: 0, byteLength: text.length, text: text,
+              lineTruncated: false,
+            ));
+          }
+          final dates = lines.map((line) => line.fileName.substring(0, 10)).toSet();
+          final events = dates.expand((date) => parseScriptAnalysis(lines, date).events).toList()
+            ..sort((a, b) => a.time.compareTo(b.time));
+          result = ScriptAnalysisSnapshot(events);
+          if (detail.log.truncated) {
+            _error = '错误日志过大，仅展示已读取部分的点击轨迹（最多 1 MiB）。';
+          }
+        }
+        if (!mounted || revision != _revision) return;
+        setState(() { _snapshot = result; _loading = false; });
+        return;
+      }
       final byKey = <String, ScriptLogLine>{};
       final trendDates = _dates.take(7).toList();
       final oldestRequiredDate = trendDates.isEmpty ? _dateKey : trendDates.last;
@@ -149,19 +204,21 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
                 ),
               ),
             )
-          else if (snapshot == null || snapshot.events.isEmpty)
+          if (snapshot == null || snapshot.events.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 48),
               child: Center(child: Text(I18n.homeAnalysisEmpty.tr)),
             )
           else ...[
-            _summary(snapshot),
-            const SizedBox(height: 12),
+            if (!_errorLogs) _summary(snapshot),
+            if (!_errorLogs) const SizedBox(height: 12),
             _pathCard(snapshot),
-            const SizedBox(height: 12),
-            _densityCard(snapshot),
-            const SizedBox(height: 12),
-            _rankingCard(snapshot),
+            if (!_errorLogs) ...[
+              const SizedBox(height: 12),
+              _densityCard(snapshot),
+              const SizedBox(height: 12),
+              _rankingCard(snapshot),
+            ],
           ],
         ],
       ),
@@ -169,7 +226,26 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
   }
 
   Widget _toolbar() {
-    return Row(children: [
+    return Column(children: [
+      Row(children: [
+        const Text('日志'),
+        const SizedBox(width: 8),
+        FilterChip(
+          label: const Text('错误日志'), selected: _errorLogs,
+          onSelected: (value) { _errorLogs = value; _loadDates(); },
+        ),
+      ]),
+      if (_errorLogs) Row(children: [
+        Expanded(child: DropdownButton<String>(
+          isExpanded: true, value: _errorId,
+          hint: const Text('暂无错误日志'),
+          items: _errorItems.map((item) => DropdownMenuItem(
+            value: item.id, child: Text(item.directory, overflow: TextOverflow.ellipsis),
+          )).toList(),
+          onChanged: (value) { if (value == null) return; _errorId = value; _loadAnalysis(); },
+        )),
+        IconButton(onPressed: _loadDates, icon: const Icon(Icons.refresh)),
+      ]) else Row(children: [
       const Icon(Icons.calendar_today_outlined, size: 18),
       const SizedBox(width: 8),
       DropdownButton<String>(
@@ -184,6 +260,7 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
       ),
       const Spacer(),
       IconButton(onPressed: _loadAnalysis, icon: const Icon(Icons.refresh)),
+    ]),
     ]);
   }
 
