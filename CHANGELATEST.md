@@ -9,3 +9,10 @@
 - Android 可连接局域网 HTTP OAS 服务，窄屏设置项改为纵向布局
 - 应用更新源改为本仓库的 GitHub Release
 - Android 发布版改用独立签名密钥，移除仓库中的旧密钥和口令说明
+
+## 修复 | Fixed
+- 修复 `ArgsController.loadModel` 未将参数转为 `ArgumentModel` 的问题
+
+## 说明 | Notes
+- 安卓首次使用时，在设置页填写手机可访问的 OAS 服务地址
+- 任务组列表功能需要配合带 `task_list` 的 OAS 服务端版本
