@@ -30,6 +30,11 @@ extension _ArgumentViewActions on _ArgumentViewState {
     _applyValue(value, 'multi_enum', useSetState: true);
   }
 
+  /// 任务组的任务列表：新增 / 拖动排序 / 删除之后，把整份列表写回去。
+  void onTaskListChanged(List<String> value) {
+    _applyValue(value, taskListArgumentType, useSetState: true);
+  }
+
   void onDateTimeChanged(String? value) {
     _applyValue(value ?? '', 'date_time', useSetState: true);
   }

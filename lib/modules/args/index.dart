@@ -13,6 +13,7 @@ import 'package:flutter_pickers/time_picker/model/pduration.dart';
 import 'package:flutter_pickers/time_picker/model/suffix.dart';
 import 'package:get/get.dart';
 import 'package:oasx/api/api_client.dart';
+import 'package:oasx/config/constants.dart';
 import 'package:oasx/modules/common/models/config_drag_payload.dart';
 import 'package:oasx/modules/common/widgets/drag_copy_feedback.dart';
 import 'package:oasx/service/websocket_service.dart';
@@ -28,6 +29,7 @@ part 'widgets/time_picker.dart';
 part 'widgets/argument_view.dart';
 part 'widgets/argument_view_actions.dart';
 part 'widgets/multi_enum_dropdown.dart';
+part 'widgets/task_list_editor.dart';
 part 'controllers/args_controller.dart';
 
 typedef SetArgumentCallback = void Function(

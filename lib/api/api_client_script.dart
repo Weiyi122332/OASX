@@ -19,7 +19,9 @@ extension ApiClientScriptX on ApiClient {
     String type,
     dynamic value,
   ) async {
-    final encodedValue = type == 'multi_enum' ? jsonEncode(value) : value;
+    // 列表类型的参数（多选下拉、任务组的任务列表）要按 JSON 数组传给服务端
+    final encodedValue =
+        listArgumentTypes.contains(type) ? jsonEncode(value) : value;
     final res = await request(
       () => put(
         '/$scriptName/$taskName/$groupName/$argumentName/value',

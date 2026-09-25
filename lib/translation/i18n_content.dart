@@ -291,6 +291,11 @@ class I18n {
       argsMinValue = 'args_min_value';
   static const String argsMaxValue = 'args_max_value',
       argsUnsavedPrompt = 'args_unsaved_prompt';
+  static const String argsTaskListEmpty = 'args_task_list_empty',
+      argsTaskListAdd = 'args_task_list_add',
+      argsTaskListRemove = 'args_task_list_remove';
+  static const String argsTaskListReorder = 'args_task_list_reorder',
+      argsTaskListLimit = 'args_task_list_limit';
   static const String home = 'Home', about = 'About', updater = 'Updater';
   static const String tool = 'Tool', taskList = 'TaskList', script = 'Script';
   static const String restart = 'Restart',

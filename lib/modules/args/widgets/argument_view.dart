@@ -173,6 +173,14 @@ class _ArgumentViewState extends State<ArgumentView> {
           enabled: !isLocked,
           onChanged: onMultiEnumChanged,
         ),
+      'task_list' => TaskListEditor(
+          value: ArgumentModel.normalizeMultiEnumValue(model.value),
+          options: model.enumEnum ?? const <String>[],
+          maxCount: model.maxItems,
+          errorText: errorText,
+          enabled: !isLocked,
+          onChanged: onTaskListChanged,
+        ),
       'date_time' => _buildPicker(
           DateTimePicker(value: model.value, onChange: onDateTimeChanged),
           errorText,

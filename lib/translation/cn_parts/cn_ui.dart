@@ -314,5 +314,10 @@ final Map<String, String> _cn_ui = {
   I18n.argsMinValue: '最小值',
   I18n.argsMaxValue: '最大值',
   I18n.argsUnsavedPrompt: '当前有未保存的修改，是否放弃？',
+  I18n.argsTaskListEmpty: '还没有任务，点「新增任务」加一个',
+  I18n.argsTaskListAdd: '新增任务',
+  I18n.argsTaskListRemove: '从任务组里删掉',
+  I18n.argsTaskListReorder: '拖动左边的把手可以改顺序',
+  I18n.argsTaskListLimit: '任务数量上限',
   I18n.success: '成功',
 };

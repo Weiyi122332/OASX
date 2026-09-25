@@ -30,7 +30,17 @@ class ArgsController extends GetxController {
   void loadModel(Map<String, dynamic> json) {
     groups.value = [];
     json.forEach((key, value) {
-      groups.value.add(GroupsModel(groupName: key, members: value));
+      final members = <ArgumentModel>[];
+      if (value is List) {
+        for (final argument in value) {
+          if (argument is Map) {
+            members.add(
+              ArgumentModel.fromJson(Map<String, dynamic>.from(argument)),
+            );
+          }
+        }
+      }
+      groups.value.add(GroupsModel(groupName: key, members: members));
     });
   }
 
@@ -274,6 +284,7 @@ class ArgsController extends GetxController {
           : I18n.argsInvalidTimeDelta.tr,
       'enum' => _validateEnum(model, current),
       'multi_enum' => _validateMultiEnum(model, value),
+      'task_list' => _validateTaskList(model, value),
       _ => null,
     };
   }
@@ -366,6 +377,20 @@ class ArgsController extends GetxController {
     return I18n.argsInvalidEnum.tr;
   }
 
+  /// 任务组的任务列表：值必须是下拉里有的任务，而且不能超过服务端给的上限。
+  String? _validateTaskList(ArgumentModel model, dynamic value) {
+    final invalid = _validateMultiEnum(model, value);
+    if (invalid != null) {
+      return invalid;
+    }
+    final maxCount = model.maxItems;
+    final selected = ArgumentModel.normalizeMultiEnumValue(value);
+    if (maxCount != null && selected.length > maxCount) {
+      return '${I18n.argsTaskListLimit.tr} $maxCount';
+    }
+    return null;
+  }
+
   String? _validateInteger(ArgumentModel model, String value) {
     final parsed = int.tryParse(value);
     if (parsed == null) {
@@ -427,6 +452,8 @@ class ArgumentModel {
   final dynamic minimum;
   final dynamic maximum;
   final dynamic defaultValue;
+  /// 列表类型的参数最多能放几项（服务端给的，例如任务组最多 10 个任务）
+  final int? maxItems;
 
   ArgumentModel(
     this.enumEnum,
@@ -437,6 +464,7 @@ class ArgumentModel {
     required this.title,
     required this.value,
     required this.type,
+    this.maxItems,
   });
 
   factory ArgumentModel.fromJson(Map<String, dynamic> json) {
@@ -448,11 +476,25 @@ class ArgumentModel {
       json['defaultValue'],
       json['description'],
       title: json['name'] as String,
-      value: type == 'multi_enum'
+      value: listArgumentTypes.contains(type)
           ? normalizeMultiEnumValue(json['value'])
           : json['value'],
       type: type,
+      maxItems: _asInt(json['maxItems']),
     );
+  }
+
+  static int? _asInt(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse(value.toString());
   }
 
   static List<String> normalizeMultiEnumValue(dynamic value) {

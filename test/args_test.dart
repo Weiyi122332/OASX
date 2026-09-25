@@ -31,4 +31,38 @@ void main() {
       <String>['one', 'two'],
     );
   });
+
+  test('task_list keeps the order and reads the limit', () {
+    final controller = ArgsController();
+    controller.loadModelfromStr(
+      '{"group_config":[{"name":"tasks","value":["Tako","Pets"],'
+      '"type":"task_list","enumEnum":["Pets","Tako","Nian"],"maxItems":10}]}',
+    );
+
+    final model = controller.groups.value.first.members.first as ArgumentModel;
+    expect(model.type, 'task_list');
+    expect(model.value, <String>['Tako', 'Pets']);
+    expect(model.maxItems, 10);
+    expect(controller.validateArgument(model, model.value), isNull);
+    expect(controller.validateArgument(model, <String>['unknown']), isNotNull);
+    expect(
+      controller.validateArgument(
+        model,
+        List<String>.generate(11, (_) => 'Pets'),
+      ),
+      isNotNull,
+    );
+  });
+
+  test('task_list also accepts a JSON encoded stored value', () {
+    final controller = ArgsController();
+    controller.loadModelfromStr(
+      r'{"group_config":[{"name":"tasks","value":"[\"Pets\",\"Tako\"]",'
+      r'"type":"task_list","enumEnum":["Pets","Tako"]}]}',
+    );
+
+    final model = controller.groups.value.first.members.first as ArgumentModel;
+    expect(model.value, <String>['Pets', 'Tako']);
+    expect(model.maxItems, isNull);
+  });
 }
