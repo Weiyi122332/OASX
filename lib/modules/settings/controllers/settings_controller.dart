@@ -30,7 +30,8 @@ class SettingsController extends GetxController {
   void onInit() {
     autoLoginAfterDeploy.value =
         storage.read(StorageKey.autoLoginAfterDeploy.name) ?? false;
-    autoDeploy.value = (storage.read(StorageKey.autoDeploy.name) ?? false) &&
+    autoDeploy.value =
+        (storage.read(StorageKey.autoDeploy.name) ?? false) &&
         PlatformUtils.isDesktop;
     address.value = storage.read(StorageKey.address.name) ?? '';
     updateProxyUrl.value = storage.read(StorageKey.updateProxyUrl.name) ?? '';
@@ -113,14 +114,15 @@ class SettingsController extends GetxController {
 
   void _syncApiAddress() {
     if (address.value.isEmpty) {
-      if (PlatformUtils.isWeb) {
+      if (PlatformUtils.isWeb || PlatformUtils.isMobile) {
         ApiClient().clearAddress();
         return;
       }
       ApiClient().resetAddress();
       return;
     }
-    final normalized = address.value.startsWith('http://') ||
+    final normalized =
+        address.value.startsWith('http://') ||
             address.value.startsWith('https://')
         ? address.value
         : 'http://${address.value}';
@@ -148,9 +150,9 @@ class SettingsController extends GetxController {
     }
     if (Get.isRegistered<ScriptService>()) {
       try {
-        await Get.find<ScriptService>()
-            .resetDashboardState()
-            .timeout(const Duration(seconds: 5));
+        await Get.find<ScriptService>().resetDashboardState().timeout(
+          const Duration(seconds: 5),
+        );
       } catch (_) {}
     }
   }

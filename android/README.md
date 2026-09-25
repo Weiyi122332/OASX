@@ -1,36 +1,18 @@
-PS C:\Users\萌萌哒\Desktop\key> keytool -genkey -v -keystore .\upload-keystore.jks -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
-输入密钥库口令:
-再次输入新口令:
-它们不匹配。请重试
-输入密钥库口令:
-再次输入新口令:
-您的名字与姓氏是什么?
-[Unknown]:  Huangrunheng
-您的组织单位名称是什么?
-[Unknown]:  OASX
-您的组织名称是什么?
-[Unknown]:  OASX
-您所在的城市或区域名称是什么?
-[Unknown]:  OASX
-您所在的省/市/自治区名称是什么?
-[Unknown]:  OASX
-该单位的双字母国家/地区代码是什么?
-[Unknown]:  OASX
-CN=Huangrunheng, OU=OASX, O=OASX, L=OASX, ST=OASX, C=OASX是否正确?
-[否]:  是
+# Android 构建与签名
 
-正在为以下对象生成 2,048 位RSA密钥对和自签名证书 (SHA256withRSA) (有效期为 10,000 天):
-         CN=Huangrunheng, OU=OASX, O=OASX, L=OASX, ST=OASX, C=OASX
-输入 <upload> 的密钥口令
-        (如果和密钥库口令相同, 按回车):
-[正在存储.\upload-keystore.jks]
+Android 客户端连接运行在其他设备上的 OAS 服务。首次启动后，在设置页填写可从手机访问的服务地址（例如 `http://192.168.1.10:22288`）；`127.0.0.1` 指的是手机自身。服务端和手机需要在同一可互通网络，服务端也需要监听对应网卡。
 
-Warning:
-JKS 密钥库使用专用格式。建议使用 "keytool -importkeystore -srckeystore .\upload-keystore.jks -destkeystore .\upload-keystore.jks -deststoretype pkcs12" 迁移到行业标准格式 PKCS12。
-PS C:\Users\萌萌哒\Desktop\key>
+应用允许 HTTP 连接，以兼容局域网中的 OAS 服务。请只在可信网络使用 HTTP；有条件时优先通过 HTTPS 连接。
 
+发布版 APK 必须使用独立的签名密钥。构建环境需要设置：
 
+- `ANDROID_KEYSTORE_PATH`：keystore 文件的绝对路径
+- `ANDROID_KEYSTORE_PASSWORD`：keystore 口令
+- `ANDROID_KEY_ALIAS`：签名密钥别名
+- `ANDROID_KEY_PASSWORD`：签名密钥口令
 
+GitHub Actions 使用同名的后 3 项 Secrets，并从 `ANDROID_KEYSTORE_BASE64` 还原 keystore。不要把 keystore、口令或 `key.properties` 提交到仓库。每次更新必须使用同一签名密钥；应在安全位置保留密钥备份。
 
-
-密码是 oasx-password
+```powershell
+flutter build apk --release
+```

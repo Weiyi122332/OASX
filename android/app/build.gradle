@@ -5,6 +5,23 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+def releaseKeystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+def releaseKeystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+def releaseKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
+def releaseKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+def hasReleaseSigning = [
+    releaseKeystorePath,
+    releaseKeystorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+].every { it != null && !it.isEmpty() }
+
+if (!hasReleaseSigning && gradle.startParameter.taskNames.any {
+    it.toLowerCase().contains("release")
+}) {
+    throw new GradleException("Android release signing environment is missing")
+}
+
 android {
     namespace = "com.oas.oasx"
     compileSdk = flutter.compileSdkVersion
@@ -31,12 +48,20 @@ android {
     }
 
     
+    signingConfigs {
+        release {
+            if (hasReleaseSigning) {
+                storeFile = file(releaseKeystorePath)
+                storePassword = releaseKeystorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            signingConfig = signingConfigs.release
             minifyEnabled = true
             shrinkResources = true
             proguardFiles(

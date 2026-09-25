@@ -1,30 +1,47 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:oasx/main.dart';
+import 'package:oasx/modules/settings/widgets/setting_item.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const OASXApp());
+  Future<void> pumpSettingItem(WidgetTester tester, double width) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: width,
+              child: const SettingItem(
+                left: Text('Server address'),
+                right: SizedBox(width: 220, child: TextField()),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('setting item stacks a fixed-width input on a phone', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await pumpSettingItem(tester, 280);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(
+      tester.getTopLeft(find.byType(TextField)).dy,
+      greaterThan(tester.getTopLeft(find.text('Server address')).dy),
+    );
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('setting item keeps a row on a wide layout', (tester) async {
+    await pumpSettingItem(tester, 700);
+
+    expect(tester.takeException(), isNull);
+    expect(
+      tester.getTopLeft(find.byType(TextField)).dx,
+      greaterThan(tester.getTopLeft(find.text('Server address')).dx),
+    );
   });
 }

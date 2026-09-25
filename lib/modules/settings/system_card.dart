@@ -50,18 +50,19 @@ class SystemSettingsCard extends StatelessWidget {
             ),
             right: const SystemTraySwitch(),
           ),
-        SettingItem(
-          left: Row(
-            children: [
-              Text(I18n.shutdownOasOnExit.tr),
-              Tooltip(
-                message: I18n.shutdownOasOnExitHelp.tr,
-                child: const Icon(Icons.help_outline, size: 16),
-              ).paddingOnly(left: 5),
-            ],
+        if (PlatformUtils.isDesktop)
+          SettingItem(
+            left: Row(
+              children: [
+                Text(I18n.shutdownOasOnExit.tr),
+                Tooltip(
+                  message: I18n.shutdownOasOnExitHelp.tr,
+                  child: const Icon(Icons.help_outline, size: 16),
+                ).paddingOnly(left: 5),
+              ],
+            ),
+            right: const ShutdownOasOnExitSwitch(),
           ),
-          right: const ShutdownOasOnExitSwitch(),
-        ),
         if (PlatformUtils.isDesktop)
           SettingItem(
             left: Row(

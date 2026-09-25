@@ -87,6 +87,10 @@ class _LoginInputFieldState extends State<_LoginInputField> {
           controller: _controller,
           focusNode: _focusNode,
           obscureText: widget.type == _LoginFieldType.password,
+          decoration:
+              widget.type == _LoginFieldType.address && PlatformUtils.isMobile
+              ? const InputDecoration(hintText: 'http://192.168.1.10:22288')
+              : null,
           keyboardType: widget.type == _LoginFieldType.address
               ? TextInputType.url
               : TextInputType.text,
@@ -97,10 +101,10 @@ class _LoginInputFieldState extends State<_LoginInputField> {
             bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
           ),
           textInputAction: TextInputAction.done,
-          onTapOutside:
-              PlatformUtils.isWeb ? null : (_) => _focusNode.unfocus(),
-          onEditingComplete:
-              PlatformUtils.isWeb ? null : _focusNode.unfocus,
+          onTapOutside: PlatformUtils.isWeb
+              ? null
+              : (_) => _focusNode.unfocus(),
+          onEditingComplete: PlatformUtils.isWeb ? null : _focusNode.unfocus,
           onChanged: (text) {
             switch (widget.type) {
               case _LoginFieldType.address:

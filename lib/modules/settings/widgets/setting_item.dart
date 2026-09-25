@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:styled_widget/styled_widget.dart';
 
 class SettingItem extends StatelessWidget {
   final Widget left;
@@ -15,21 +14,32 @@ class SettingItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final row = <Widget>[
-      left,
-      const SizedBox(width: 8),
-      right,
-    ]
-        .toRow(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-        )
-        .padding(vertical: 4);
-    return onTap == null
-        ? row
-        : InkWell(
-            onTap: onTap,
-            child: row,
-          );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final content = constraints.maxWidth < 480
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  left,
+                  const SizedBox(height: 4),
+                  Align(alignment: Alignment.centerRight, child: right),
+                ],
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Flexible(child: left),
+                  const SizedBox(width: 8),
+                  right,
+                ],
+              );
+        final padded = Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: content,
+        );
+        return onTap == null ? padded : InkWell(onTap: onTap, child: padded);
+      },
+    );
   }
 }

@@ -61,7 +61,8 @@ extension HomeDashboardStartupX on HomeDashboardController {
     isStartupChecking.value = true;
     isStartupConnectionFailed.value = false;
     try {
-      if (PlatformUtils.isWeb && !ApiClient().hasConfiguredBackendAddress) {
+      if (!PlatformUtils.isDesktop &&
+          !ApiClient().hasConfiguredBackendAddress) {
         isStartupConnectionFailed.value = true;
         return;
       }

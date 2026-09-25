@@ -1,10 +1,10 @@
 const String updateUrlGithub =
-    'https://api.github.com/repos/AzurTian/OASX/releases/latest';
+    'https://api.github.com/repos/Weiyi122332/OASX/releases/latest';
 
 const String readmeUrlGithub =
     'https://api.github.com/repos/runhey/OnmyojiAutoScript/readme';
 
-const String oasxRelease = "https://github.com/AzurTian/OASX/releases";
+const String oasxRelease = "https://github.com/Weiyi122332/OASX/releases";
 
 // 任务组任务列表的参数类型：界面上是可以新增、拖动改顺序的列表
 // （OAS 那边由任务组的 x-ui-type 标出来）。

@@ -68,7 +68,9 @@ class AppExitService extends GetxService with WidgetsBindingObserver {
   Future<void> shutdownOasForExitIfEnabled({
     Duration timeout = exitShutdownTimeout,
   }) async {
-    if (!shutdownOasOnExit.value || _shutdownStarted) {
+    if (PlatformUtils.isMobile ||
+        !shutdownOasOnExit.value ||
+        _shutdownStarted) {
       return;
     }
     _shutdownStarted = true;

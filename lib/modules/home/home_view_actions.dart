@@ -46,10 +46,15 @@ extension _HomeViewActions on _HomeViewState {
               );
             }),
             const SizedBox(height: 12),
-            Text(
-              I18n.homeConnectionRetryHint.tr,
-              textAlign: TextAlign.center,
-            ),
+            Text(I18n.homeConnectionRetryHint.tr, textAlign: TextAlign.center),
+            if (PlatformUtils.isMobile) ...[
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: () => Get.toNamed('/settings'),
+                icon: const Icon(Icons.settings_rounded),
+                label: Text(I18n.setting.tr),
+              ),
+            ],
           ],
         ),
       ),

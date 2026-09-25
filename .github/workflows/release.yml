@@ -73,11 +73,10 @@ jobs:
           tag_name="${GITHUB_REF_NAME}"
           version_core="${tag_name#v}"
           build_name="${version_core%%+*}"
-          build_number="1"
+          build_number="${GITHUB_RUN_NUMBER}"
           prerelease="false"
 
           if [[ "$tag_name" == *-* ]]; then
-            build_number="${GITHUB_RUN_NUMBER}"
             prerelease="true"
           fi
 
@@ -226,4 +225,73 @@ jobs:
           gh release upload "${{ needs.create_release.outputs.tag_name }}" `
             "${{ steps.package.outputs.asset_path }}" `
             --repo "$env:GITHUB_REPOSITORY" `
+            --clobber
+
+  build_android:
+    name: Build Android
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    runs-on: ubuntu-latest
+    needs: create_release
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+          pub-cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check Dart code
+        run: |
+          dart analyze --fatal-infos
+          flutter test --concurrency=1
+
+      - name: Restore Android signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [[ -z "${!name}" ]]; then
+              echo "Missing required secret: $name" >&2
+              exit 1
+            fi
+          done
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/oasx-release.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/oasx-release.jks" >> "$GITHUB_ENV"
+
+      - name: Build Android APK
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          flutter build apk --release \
+            --build-name "${{ needs.create_release.outputs.build_name }}" \
+            --build-number "${{ needs.create_release.outputs.build_number }}"
+
+      - name: Upload Android asset
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+        run: |
+          asset="oasx_${{ needs.create_release.outputs.tag_name }}_android_universal.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "$asset"
+          gh release upload "${{ needs.create_release.outputs.tag_name }}" \
+            "$asset" \
+            --repo "$GITHUB_REPOSITORY" \
             --clobber
