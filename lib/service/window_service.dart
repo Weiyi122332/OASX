@@ -10,6 +10,7 @@ import 'package:oasx/modules/common/widgets/exit_confirm_dialog.dart';
 import 'package:oasx/service/app_exit_service.dart';
 import 'package:oasx/service/system_tray_service.dart';
 import 'package:oasx/utils/platform_utils.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
 
 part 'window_service_exit.dart';
@@ -145,10 +146,20 @@ class WindowService extends GetxService with WindowListener {
   Future<WindowStateModel?> initWindowState() async {
     if (!enableWindowState.value) return null;
     final jsonStr = _storage.read(StorageKey.windowState.name);
-    if (jsonStr == null) return null;
-    WindowStateModel? lastState = WindowStateModel.fromJson(
-      json.decode(jsonStr) as Map<String, dynamic>,
-    );
+    if (jsonStr is! String) return null;
+    WindowStateModel lastState;
+    try {
+      lastState = WindowStateModel.fromJson(
+        json.decode(jsonStr) as Map<String, dynamic>,
+      );
+    } catch (_) {
+      await _storage.remove(StorageKey.windowState.name);
+      return null;
+    }
+    if (!await _isWindowStateVisible(lastState)) {
+      await _storage.remove(StorageKey.windowState.name);
+      return null;
+    }
     await windowManager.setBounds(
       Rect.fromLTWH(
         lastState.x,
@@ -162,6 +173,9 @@ class WindowService extends GetxService with WindowListener {
 
   Future<void> _saveWindowState() async {
     if (!PlatformUtils.isDesktop || !enableWindowState.value) return;
+    if (!await windowManager.isVisible() || await windowManager.isMinimized()) {
+      return;
+    }
     final size = await windowManager.getSize();
     final pos = await windowManager.getPosition();
     final state = WindowStateModel(
@@ -170,8 +184,30 @@ class WindowService extends GetxService with WindowListener {
       width: size.width,
       height: size.height,
     );
+    if (!await _isWindowStateVisible(state)) return;
     _storage.write(StorageKey.windowState.name, json.encode(state.toJson()));
     printInfo(info: 'save window state:${state.toJson()}');
+  }
+
+  Future<bool> _isWindowStateVisible(WindowStateModel state) async {
+    try {
+      final displays = await screenRetriever.getAllDisplays();
+      return isWindowStateVisible(
+        state,
+        displays.map((display) {
+          final position = display.visiblePosition ?? Offset.zero;
+          final size = display.visibleSize ?? display.size;
+          return Rect.fromLTWH(
+            position.dx,
+            position.dy,
+            size.width,
+            size.height,
+          );
+        }),
+      );
+    } catch (_) {
+      return false;
+    }
   }
 
   void _scheduleSave() {
