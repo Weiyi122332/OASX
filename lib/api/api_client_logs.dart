@@ -23,7 +23,16 @@ extension ApiClientLogsX on ApiClient {
         options: _noCacheOptions(),
       ),
     );
-    return ScriptLogWindow.fromJson(_jsonMap(res.data));
+    return ScriptLogWindow.fromJson(
+      requireLogJsonResponse(
+        operation: '读取运行日志',
+        success: res.isSuccess,
+        data: res.data,
+        statusCode: res.code,
+        error: res.error,
+        fields: const {'lines': List},
+      ),
+    );
   }
 
   /// Builds script log SSE URI for live tailing.
@@ -66,21 +75,74 @@ extension ApiClientLogsX on ApiClient {
       query['date'] = normalizedDate;
     }
     final normalizedScript = scriptName?.trim();
-    if (normalizedScript != null && normalizedScript.isNotEmpty) {
-      query['script_name'] = normalizedScript;
+    var pageCursor = cursor?.trim();
+    final visited = <String>{};
+    while (true) {
+      if (pageCursor != null && pageCursor.isNotEmpty) {
+        query['cursor'] = pageCursor;
+      }
+      final res = await request(
+        () => get(
+          '/logs/errors',
+          queryParameters: query,
+          options: _noCacheOptions(),
+        ),
+      );
+      final page = ScriptErrorLogList.fromJson(
+        requireLogJsonResponse(
+          operation: '读取错误日志列表',
+          success: res.isSuccess,
+          data: res.data,
+          statusCode: res.code,
+          error: res.error,
+          fields: const {'items': List},
+        ),
+      );
+      final items = <ScriptErrorLogItem>[];
+      // Limit concurrent detail reads and cache only ownership metadata.
+      for (var offset = 0; offset < page.items.length; offset += 4) {
+        final batch = page.items.skip(offset).take(4).toList();
+        final resolved = await Future.wait(
+          batch.map(
+            (item) => _errorOwnership.resolve(
+              item,
+              backend: address,
+              loadDetail: (id) =>
+                  getScriptErrorLogDetail(id, logLimitBytes: 1048576),
+            ),
+          ),
+        );
+        items.addAll(
+          resolved.where(
+            (item) =>
+                normalizedScript == null ||
+                normalizedScript.isEmpty ||
+                errorLogBelongsInView(item, normalizedScript),
+          ),
+        );
+      }
+      final next = page.nextCursor;
+      if (page.hasMore &&
+          (next == null ||
+              next.isEmpty ||
+              next == pageCursor ||
+              visited.contains(next))) {
+        throw const LogApiException('读取错误日志列表', '服务器返回的翻页游标无效');
+      }
+      if (items.isNotEmpty || !page.hasMore) {
+        return ScriptErrorLogList(
+          date: page.date,
+          scriptName: normalizedScript,
+          items: items,
+          nextCursor: next,
+          hasMore: page.hasMore,
+        );
+      }
+      // An entire page may belong to other configs. Continue rather than
+      // incorrectly presenting an empty list while matching older errors exist.
+      visited.add(next!);
+      pageCursor = next;
     }
-    final normalizedCursor = cursor?.trim();
-    if (normalizedCursor != null && normalizedCursor.isNotEmpty) {
-      query['cursor'] = normalizedCursor;
-    }
-    final res = await request(
-      () => get(
-        '/logs/errors',
-        queryParameters: query,
-        options: _noCacheOptions(),
-      ),
-    );
-    return ScriptErrorLogList.fromJson(_jsonMap(res.data));
   }
 
   /// Loads one error log detail by id.
@@ -95,7 +157,16 @@ extension ApiClientLogsX on ApiClient {
         options: _noCacheOptions(),
       ),
     );
-    return ScriptErrorLogDetail.fromJson(_jsonMap(res.data));
+    return ScriptErrorLogDetail.fromJson(
+      requireLogJsonResponse(
+        operation: '读取错误日志详情',
+        success: res.isSuccess,
+        data: res.data,
+        statusCode: res.code,
+        error: res.error,
+        fields: const {'id': String, 'log': Map, 'images': List},
+      ),
+    );
   }
 
   /// Downloads one error image as bytes.
@@ -107,12 +178,9 @@ extension ApiClientLogsX on ApiClient {
       '/logs/errors/${Uri.encodeComponent(errorId)}/images/${Uri.encodeComponent(imageName)}',
       options: _noCacheOptions(responseType: ResponseType.bytes),
     );
-    final payload = response.data;
-    final rawBytes = payload is Map ? payload['data'] : payload;
-    final data = rawBytes is List ? rawBytes.cast<int>() : const <int>[];
     return ScriptErrorImageBytes(
       fileName: imageName,
-      bytes: Uint8List.fromList(data),
+      bytes: requireLogImageResponse(response.data, response.statusCode),
     );
   }
 
@@ -147,15 +215,5 @@ extension ApiClientLogsX on ApiClient {
         ? ApiClient._defaultAddress
         : address.trim();
     return Uri.parse(normalized);
-  }
-
-  Map<String, dynamic> _jsonMap(dynamic value) {
-    if (value is Map<String, dynamic>) {
-      return value;
-    }
-    if (value is Map) {
-      return value.cast<String, dynamic>();
-    }
-    return <String, dynamic>{};
   }
 }

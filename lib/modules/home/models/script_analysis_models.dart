@@ -1,4 +1,5 @@
 import 'package:oasx/modules/log/log_browser_models.dart';
+import 'package:oasx/modules/log/models/log_task_context.dart';
 
 enum ScriptActionKind { click, swipe }
 
@@ -24,7 +25,8 @@ class ScriptActionEvent {
   final String control;
 
   bool get isRandomClick =>
-      kind == ScriptActionKind.click && control.toLowerCase().contains('random');
+      kind == ScriptActionKind.click &&
+      control.toLowerCase().contains('random');
 }
 
 class ScriptAnalysisSnapshot {
@@ -34,7 +36,8 @@ class ScriptAnalysisSnapshot {
 
   int get clickCount =>
       events.where((event) => event.kind == ScriptActionKind.click).length;
-  int get randomClickCount => events.where((event) => event.isRandomClick).length;
+  int get randomClickCount =>
+      events.where((event) => event.isRandomClick).length;
   int get taskCount => clicksByTask.length;
 
   Map<String, int> get clicksByTask {
@@ -66,31 +69,34 @@ class ScriptAnalysisSnapshot {
 
 ScriptAnalysisSnapshot parseScriptAnalysis(
   Iterable<ScriptLogLine> lines,
-  String dateKey,
-) {
+  String dateKey, {
+  String? fallbackTask,
+}) {
   final fullTimestamp = RegExp(
     r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})',
   );
-  final compactTimestamp = RegExp(
-    r'^(\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})',
-  );
-  final taskPattern = RegExp(r'\[Task\]\s+([A-Za-z0-9_]+)\s+\(');
+  final compactTimestamp = RegExp(r'^(\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})');
+  final taskContext = LogTaskContext();
   final clickPattern = RegExp(r'Click\s+\(\s*(\d+),\s*(\d+)\)\s+@\s+(.+?)\s*$');
   final swipePattern = RegExp(
     r'Swipe\s+\(\s*(\d+),\s*(\d+)\)\s*->\s*\(\s*(\d+),\s*(\d+)\)',
   );
-  var task = 'Unknown';
   final events = <ScriptActionEvent>[];
   for (final line in lines) {
     final fileDate = line.fileName.length >= 10
         ? line.fileName.substring(0, 10)
         : '';
+    taskContext.consume(line.text);
+    final task =
+        taskContext.task ??
+        taskContext.fallbackTask ??
+        fallbackTask ??
+        'Unknown';
     if (fileDate != dateKey) continue;
-    final taskMatch = taskPattern.firstMatch(line.text);
-    if (taskMatch != null) task = taskMatch.group(1)!;
     final fullTimeMatch = fullTimestamp.firstMatch(line.text);
     final compactTimeMatch = compactTimestamp.firstMatch(line.text);
-    final timestampText = fullTimeMatch?.group(1) ??
+    final timestampText =
+        fullTimeMatch?.group(1) ??
         (compactTimeMatch == null
             ? null
             : '${dateKey.substring(0, 4)}-${compactTimeMatch.group(1)}');
@@ -100,30 +106,34 @@ ScriptAnalysisSnapshot parseScriptAnalysis(
     if (time == null) continue;
     final click = clickPattern.firstMatch(line.text);
     if (click != null) {
-      events.add(ScriptActionEvent(
-        time: time,
-        kind: ScriptActionKind.click,
-        startX: double.parse(click.group(1)!),
-        startY: double.parse(click.group(2)!),
-        endX: double.parse(click.group(1)!),
-        endY: double.parse(click.group(2)!),
-        task: task,
-        control: click.group(3)!.trim(),
-      ));
+      events.add(
+        ScriptActionEvent(
+          time: time,
+          kind: ScriptActionKind.click,
+          startX: double.parse(click.group(1)!),
+          startY: double.parse(click.group(2)!),
+          endX: double.parse(click.group(1)!),
+          endY: double.parse(click.group(2)!),
+          task: task,
+          control: click.group(3)!.trim(),
+        ),
+      );
       continue;
     }
     final swipe = swipePattern.firstMatch(line.text);
     if (swipe != null) {
-      events.add(ScriptActionEvent(
-        time: time,
-        kind: ScriptActionKind.swipe,
-        startX: double.parse(swipe.group(1)!),
-        startY: double.parse(swipe.group(2)!),
-        endX: double.parse(swipe.group(3)!),
-        endY: double.parse(swipe.group(4)!),
-        task: task,
-        control: 'Swipe',
-      ));
+      events.add(
+        ScriptActionEvent(
+          time: time,
+          kind: ScriptActionKind.swipe,
+          startX: double.parse(swipe.group(1)!),
+          startY: double.parse(swipe.group(2)!),
+          endX: double.parse(swipe.group(3)!),
+          endY: double.parse(swipe.group(4)!),
+          task: task,
+          control: 'Swipe',
+        ),
+      );
     }
   }
   return ScriptAnalysisSnapshot(events);

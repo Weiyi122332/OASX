@@ -38,6 +38,17 @@ class ScriptErrorLogItem {
   /// Number of available PNG images.
   final int imageCount;
 
+  ScriptErrorLogItem withScriptName(String? name) => ScriptErrorLogItem(
+    id: id,
+    directory: directory,
+    scriptName: name,
+    timestampMs: timestampMs,
+    time: time,
+    legacy: legacy,
+    logSize: logSize,
+    imageCount: imageCount,
+  );
+
   /// Builds an error item from JSON.
   factory ScriptErrorLogItem.fromJson(Map<String, dynamic> json) {
     return ScriptErrorLogItem(
@@ -172,6 +183,17 @@ class ScriptErrorLogDetail {
 
   /// Error image metadata.
   final List<ScriptErrorImageInfo> images;
+
+  ScriptErrorLogDetail withScriptName(String? name) => ScriptErrorLogDetail(
+    id: id,
+    directory: directory,
+    scriptName: name,
+    timestampMs: timestampMs,
+    time: time,
+    legacy: legacy,
+    log: log,
+    images: images,
+  );
 
   /// Builds error detail from JSON.
   factory ScriptErrorLogDetail.fromJson(Map<String, dynamic> json) {

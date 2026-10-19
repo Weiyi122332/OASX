@@ -109,12 +109,14 @@ jobs:
               --repo "$GITHUB_REPOSITORY" \
               --title "Release $TAG_NAME" \
               --notes-file CHANGELATEST.md \
+              --draft \
               --prerelease
           else
             gh release create "$TAG_NAME" \
               --repo "$GITHUB_REPOSITORY" \
               --title "Release $TAG_NAME" \
-              --notes-file CHANGELATEST.md
+              --notes-file CHANGELATEST.md \
+              --draft
           fi
 
   build_windows:
@@ -174,7 +176,12 @@ jobs:
         shell: pwsh
         run: flutter pub get
 
-      - name: Build Windows app
+      - name: Test error report integration
+        # Validate the user-facing changes before packaging a release.
+        shell: pwsh
+        run: flutter test --concurrency=1 test/illustration_test.dart test/log_api_regression_test.dart test/error_report_test.dart test/error_analysis_widget_test.dart test/script_analysis_models_test.dart
+
+      - name: Compile Windows app
         shell: pwsh
         run: |
           flutter build windows --release `
@@ -214,6 +221,16 @@ jobs:
             Remove-Item $assetPath -Force
           }
           Compress-Archive -Path (Join-Path $releasePath '*') -DestinationPath $assetPath
+          # Ship an empty pictures directory, without sample images/placeholders.
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::Open($assetPath, [System.IO.Compression.ZipArchiveMode]::Update)
+          try {
+            if ($null -eq $archive.GetEntry('pictures/')) {
+              $archive.CreateEntry('pictures/') | Out-Null
+            }
+          } finally {
+            $archive.Dispose()
+          }
           "asset_name=$assetName" >> $env:GITHUB_OUTPUT
           "asset_path=$assetPath" >> $env:GITHUB_OUTPUT
 
@@ -226,6 +243,15 @@ jobs:
             "${{ steps.package.outputs.asset_path }}" `
             --repo "$env:GITHUB_REPOSITORY" `
             --clobber
+
+      - name: Publish verified Windows release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+        shell: pwsh
+        run: |
+          gh release edit "${{ needs.create_release.outputs.tag_name }}" `
+            --repo "$env:GITHUB_REPOSITORY" `
+            --draft=false
 
   build_android:
     name: Build Android

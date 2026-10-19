@@ -9,14 +9,12 @@ import 'package:oasx/modules/settings/oas_card.dart';
 import 'package:oasx/modules/settings/settings_leave_handler.dart';
 import 'package:oasx/modules/settings/system_card.dart';
 import 'package:oasx/modules/settings/user_card.dart';
+import 'package:oasx/modules/settings/illustration_card.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/utils/platform_utils.dart';
 
 class SettingsView extends StatefulWidget {
-  const SettingsView({
-    super.key,
-    this.standalone = true,
-  });
+  const SettingsView({super.key, this.standalone = true});
 
   final bool standalone;
 
@@ -33,6 +31,11 @@ class _SettingsViewState extends State<SettingsView> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _scrollViewKey = GlobalKey();
   late final List<_SettingsSection> _sections = [
+    _SettingsSection(
+      key: GlobalKey(),
+      navTitleBuilder: () => '插画设置',
+      cardBuilder: () => const IllustrationSettingsCard(),
+    ),
     _SettingsSection(
       key: GlobalKey(),
       navTitleBuilder: () => I18n.userSetting.tr,
@@ -266,18 +269,17 @@ class _SettingsViewState extends State<SettingsView> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
                       color: isSelected
-                          ? Theme.of(context)
-                              .colorScheme
-                              .secondaryContainer
-                              .withValues(alpha: 0.38)
+                          ? Theme.of(context).colorScheme.secondaryContainer
+                                .withValues(alpha: 0.38)
                           : Colors.transparent,
                     ),
                     child: Text(
                       _sections[index].navTitleBuilder(),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight:
-                                isSelected ? FontWeight.w600 : FontWeight.w400,
-                          ),
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.w400,
+                      ),
                     ),
                   ),
                 ),

@@ -37,6 +37,14 @@ class LogCenterInfoView extends StatelessWidget {
       }
       return Column(
         children: [
+          if (controller.infoError.value.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                controller.infoError.value,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
           if (controller.olderLoading.value)
             const LinearProgressIndicator(minHeight: 2),
           Expanded(child: _buildList(context, controller.wrapLines.value)),

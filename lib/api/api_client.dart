@@ -8,6 +8,8 @@ import 'package:flutter_nb_net/flutter_net.dart';
 import 'package:get/get.dart' hide FormData, MultipartFile;
 import 'package:get_storage/get_storage.dart';
 import 'package:oasx/api/api_interceptor.dart';
+import 'package:oasx/api/log_api_response.dart';
+import 'package:oasx/modules/log/models/error_log_ownership.dart';
 import 'package:oasx/api/config_transfer_models.dart';
 import 'package:oasx/config/constants.dart';
 import 'package:oasx/modules/common/models/storage_key.dart';
@@ -72,6 +74,7 @@ class ApiClient {
   factory ApiClient() => _instance;
 
   late final CacheOptions _cacheOptions;
+  final _errorOwnership = ErrorLogOwnershipResolver();
 
   ApiClient._internal() {
     final temporaryDirectory =

@@ -4,6 +4,106 @@ part of 'script_log_browser_controller.dart';
 const Duration _errorListRefreshInterval = Duration(seconds: 5);
 
 extension ScriptLogBrowserErrorsX on ScriptLogBrowserController {
+  Future<ErrorLogSummary> errorSummary(ScriptErrorLogItem item) {
+    final key = '${item.id}:${item.logSize}';
+    if (errorSummaries.length > 256) errorSummaries.clear();
+    return errorSummaries.putIfAbsent(key, () async {
+      try {
+        final detail = await ApiClient().getScriptErrorLogDetail(
+          item.id,
+          logLimitBytes: 1048576,
+        );
+        return ErrorLogSummary.parse(
+          detail.log.content,
+          truncated: detail.log.truncated,
+        );
+      } catch (error) {
+        errorSummaries.remove(key);
+        return ErrorLogSummary('任务信息读取失败', error.toString());
+      }
+    });
+  }
+
+  /// No Markdown or image payload is produced before this action is invoked.
+  Future<void> exportErrorReport() async {
+    final detail = selectedErrorDetail.value;
+    if (detail == null || exportingErrorReport.value) return;
+    final attachSettings = includeErrorTaskSettings.value;
+    exportingErrorReport.value = true;
+    try {
+      final settings = attachSettings
+          ? await loadErrorTaskSettings(
+              detail,
+              load: (config, task) async {
+                final exported = await ApiClient().exportTaskJson(
+                  configName: config,
+                  taskName: task,
+                );
+                final payload = jsonDecode(utf8.decode(exported.bytes));
+                if (payload is! Map ||
+                    payload.length != 1 ||
+                    payload.values.single is! Map) {
+                  return const ErrorTaskSettings({});
+                }
+                Map<String, dynamic> schema = {};
+                try {
+                  schema = await ApiClient().getScriptTask(
+                    config,
+                    task,
+                    fresh: true,
+                  );
+                } catch (_) {
+                  // Labels are optional; redacted values can still be rendered.
+                }
+                return ErrorTaskSettings(
+                  Map<String, dynamic>.from(payload.values.single as Map),
+                  schema: schema,
+                );
+              },
+            )
+          : const ErrorTaskSettings({});
+      final images = <ScriptErrorImageBytes>[];
+      for (final image in detail.images) {
+        images.add(
+          await ApiClient().getScriptErrorImage(detail.id, image.name),
+        );
+      }
+      final bytes = Uint8List.fromList(
+        utf8.encode(
+          buildErrorMarkdown(
+            detail,
+            images,
+            includeTaskSettings: attachSettings,
+            taskSettings: settings,
+            translate: (text) => text.tr,
+          ),
+        ),
+      );
+      final name = 'oasx-error-${detail.timestampMs}.md';
+      if (kIsWeb) {
+        await downloadBytesToBrowser(
+          bytes,
+          name,
+          mimeType: 'text/markdown;charset=utf-8',
+        );
+      } else {
+        final path = await FilePicker.platform.saveFile(
+          fileName: name,
+          type: FileType.custom,
+          allowedExtensions: const ['md'],
+          bytes: bytes,
+        );
+        if (path == null || path.trim().isEmpty) return;
+        if (!_isMobileTargetPlatform()) await saveBytesToPath(path, bytes);
+      }
+      Get.snackbar('错误报告', 'Markdown 已保存（包含内嵌截图）');
+    } catch (error) {
+      Get.snackbar('导出失败', error.toString());
+    } finally {
+      exportingErrorReport.value = false;
+    }
+  }
+
   /// Loads one page of error logs for the current script.
   Future<void> loadErrorList({bool reset = false}) async {
     if (errorListLoading.value && !reset) {
@@ -105,7 +205,13 @@ extension ScriptLogBrowserErrorsX on ScriptLogBrowserController {
     errorMessage.value = '';
     resetErrorDetailViewport?.call();
     try {
-      final detail = await ApiClient().getScriptErrorLogDetail(normalized);
+      final fetched = await ApiClient().getScriptErrorLogDetail(
+        normalized,
+        logLimitBytes: 1048576,
+      );
+      final detail = fetched.withScriptName(
+        fetched.scriptName ?? selectedItem?.scriptName,
+      );
       if (!isErrorDetailLoadActive(requestId) ||
           selectedErrorId.value != normalized) {
         return;

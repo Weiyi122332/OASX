@@ -67,10 +67,7 @@ class LogCenterToolbar extends StatelessWidget {
 
   /// Returns whether wrapping can affect the current log text.
   bool _shouldShowWrapAction() {
-    if (controller.activeTab.value == ScriptLogBrowserTab.info) {
-      return true;
-    }
-    return controller.errorDetailVisible.value;
+    return controller.activeTab.value == ScriptLogBrowserTab.info;
   }
 
   /// Builds the info/error tab selector.

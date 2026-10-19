@@ -4,9 +4,15 @@ extension ApiClientScriptX on ApiClient {
   /// Loads the full argument model for one task.
   Future<Map<String, dynamic>> getScriptTask(
     String scriptName,
-    String taskName,
-  ) async {
-    final res = await request(() => get('/$scriptName/$taskName/args'));
+    String taskName, {
+    bool fresh = false,
+  }) async {
+    final res = await request(
+      () => get(
+        '/${Uri.encodeComponent(scriptName)}/${Uri.encodeComponent(taskName)}/args',
+        options: fresh ? _noCacheOptions() : null,
+      ),
+    );
     return res.data ?? {};
   }
 

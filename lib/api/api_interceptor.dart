@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_nb_net/flutter_net.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:oasx/translation/i18n_content.dart';
@@ -34,8 +36,9 @@ class ApiInterceptor extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     final start = response.requestOptions.extra[_startTimeKey] as int?;
-    final duration =
-        start != null ? DateTime.now().millisecondsSinceEpoch - start : null;
+    final duration = start != null
+        ? DateTime.now().millisecondsSinceEpoch - start
+        : null;
     final status = response.statusCode;
     final uri = response.requestOptions.uri;
     printInfo(
@@ -53,12 +56,23 @@ class ApiInterceptor extends Interceptor {
       return;
     }
     int code = err.response!.statusCode!;
-    final data = err.response!.data;
+    dynamic data = err.response!.data;
+    // Download endpoints request bytes, including when the server returns a
+    // JSON error. Decode that body before displaying its actual message.
+    if (data is List<int>) {
+      final text = utf8.decode(data, allowMalformed: true);
+      try {
+        data = jsonDecode(text);
+      } catch (_) {
+        data = text;
+      }
+    }
     String msg = I18n.networkUnknownError.tr;
     if (data is Map) {
       final message = data['message'];
       final detail = data['detail'];
-      final value = message ?? detail;
+      final value =
+          message ?? (detail is Map ? detail['message'] ?? detail : detail);
       if (value != null && value.toString().trim().isNotEmpty) {
         msg = value.toString();
       }
@@ -84,14 +98,19 @@ class ApiInterceptor extends Interceptor {
   }
 
   void showNetErrSnackBar() {
-    Get.snackbar(I18n.networkError.tr, I18n.networkConnectTimeout.tr,
-        duration: const Duration(seconds: 5));
+    Get.snackbar(
+      I18n.networkError.tr,
+      I18n.networkConnectTimeout.tr,
+      duration: const Duration(seconds: 5),
+    );
   }
 
   void showNetErrCodeSnackBar(String msg, int code) {
     Get.snackbar(
-        I18n.networkError.tr, '${I18n.networkErrorCode.tr}: $code | $msg',
-        duration: const Duration(seconds: 5));
+      I18n.networkError.tr,
+      '${I18n.networkErrorCode.tr}: $code | $msg',
+      duration: const Duration(seconds: 5),
+    );
   }
 
   void showErrSnackBar(String title, int code, String msg) {

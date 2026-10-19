@@ -15,6 +15,8 @@ import 'package:oasx/service/system_tray_service.dart';
 import 'package:oasx/service/theme_service.dart';
 import 'package:oasx/service/websocket_service.dart';
 import 'package:oasx/service/window_service.dart';
+import 'package:oasx/service/illustration_service.dart';
+import 'package:oasx/modules/common/widgets/illustration_backdrop.dart';
 import 'package:oasx/translation/i18n.dart';
 import 'package:oasx/utils/logger.dart';
 import 'package:oasx/utils/platform_utils.dart';
@@ -44,7 +46,10 @@ class OASXApp extends StatelessWidget {
       builder: (context) {
         return GetMaterialApp(
           debugShowCheckedModeBanner: false,
-          builder: DevicePreview.appBuilder,
+          builder: (context, child) => IllustrationBackdrop(
+            service: Get.find<IllustrationService>(),
+            child: DevicePreview.appBuilder(context, child),
+          ),
           scrollBehavior: GlobalBehavior(),
           translations: Messages(),
           locale: localeService.currentLocale,
@@ -78,9 +83,11 @@ Future<void> initService() async {
   }
   Get.lazyPut<WebSocketService>(() => WebSocketService(), fenix: true);
   final windowService = Get.put(WindowService());
+  final illustrationService = Get.put(IllustrationService(), permanent: true);
 
   await Future.wait([
     initLogger(),
+    illustrationService.initialize(),
     Get.putAsync(() async => LocaleService()),
     Get.putAsync(() async => ThemeService()),
     Get.putAsync(() async => AutoStartService(), permanent: true),

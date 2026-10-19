@@ -138,6 +138,15 @@ if (-not (Test-Path $stagedExe)) {
 }
 
 Write-Step 'Backing up current installation...'
+# Pictures are user data and must survive replacement of the installation.
+$oldPictures = Join-Path $installDir 'pictures'
+$newPictures = Join-Path $stageDir 'pictures'
+if (Test-Path -LiteralPath $oldPictures -PathType Container) {
+  New-Item -ItemType Directory -Path $newPictures -Force | Out-Null
+  Get-ChildItem -LiteralPath $oldPictures -Force | ForEach-Object {
+    Copy-Item -LiteralPath $_.FullName -Destination $newPictures -Recurse -Force
+  }
+}
 if (Test-Path $backupDir) {
   Remove-Item -LiteralPath $backupDir -Recurse -Force -ErrorAction SilentlyContinue
 }

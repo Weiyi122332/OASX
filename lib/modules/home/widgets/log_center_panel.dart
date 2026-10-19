@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oasx/api/api_client.dart';
 import 'package:oasx/modules/log/log_browser_models.dart';
+import 'package:oasx/modules/log/models/error_report.dart';
+import 'action_path_card.dart';
 import 'package:oasx/modules/log/script_log_browser_controller.dart';
 import 'package:oasx/translation/i18n_content.dart';
 
 part 'log_center_copy_dialog.dart';
 part 'log_center_error_view.dart';
 part 'log_center_error_detail_view.dart';
-part 'log_center_error_log_section.dart';
 part 'log_center_error_image_card.dart';
 part 'log_center_info_view.dart';
 part 'log_center_log_text.dart';
