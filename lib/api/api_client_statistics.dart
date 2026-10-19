@@ -5,7 +5,9 @@ extension ApiClientStatisticsX on ApiClient {
     String scriptName,
   ) async {
     final path = '/stats/${Uri.encodeComponent(scriptName)}/dates';
-    final res = await request(() => get(path));
+    final res = await request(
+      () => get(path, options: _statisticsNoCacheOptions()),
+    );
     if (!res.isSuccess || res.data is! Map) {
       throw Exception(res.error ?? 'Invalid statistics dates response');
     }
@@ -19,7 +21,9 @@ extension ApiClientStatisticsX on ApiClient {
     String dateKey,
   ) async {
     final path = '/stats/${Uri.encodeComponent(scriptName)}?date=$dateKey';
-    final res = await request(() => get(path));
+    final res = await request(
+      () => get(path, options: _statisticsNoCacheOptions()),
+    );
     if (!res.isSuccess || res.data is! Map) {
       throw Exception(res.error ?? 'Invalid statistics day response');
     }
@@ -33,10 +37,18 @@ extension ApiClientStatisticsX on ApiClient {
     final addressText = address.trim();
     final baseAddress =
         addressText.startsWith('http://') || addressText.startsWith('https://')
-            ? addressText
-            : 'http://$addressText';
+        ? addressText
+        : 'http://$addressText';
     return Uri.parse(
       '$baseAddress/stats/${Uri.encodeComponent(scriptName)}/stream?date=$dateKey',
+    );
+  }
+
+  Options _statisticsNoCacheOptions() {
+    final cacheOptions = _cacheOptions.copyWith(policy: CachePolicy.noCache);
+    return Options(
+      extra: cacheOptions.toExtra(),
+      headers: const {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'},
     );
   }
 }
