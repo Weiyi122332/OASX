@@ -93,7 +93,8 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.byType(ActionPathCard), findsOneWidget);
+      expect(find.text('错误截图'), findsOneWidget);
+      expect(find.byType(ActionPathCard), findsNothing);
       expect(tester.takeException(), isNull);
       if (preview.isNotEmpty) {
         final boundary =
@@ -217,7 +218,7 @@ void main() {
       controller.onClose();
     },
   );
-  testWidgets('error detail shows export and map without generating a report', (
+  testWidgets('error detail shows screenshots without generating a report', (
     tester,
   ) async {
     final controller = ScriptLogBrowserController(scriptName: 'demo');
@@ -261,11 +262,12 @@ void main() {
     expect(controller.includeErrorTaskSettings.value, isTrue);
     expect(controller.exportingErrorReport.value, isFalse);
     await tester.scrollUntilVisible(
-      find.byType(ActionPathCard),
+      find.text('错误截图'),
       150,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.byType(ActionPathCard), findsOneWidget);
+    expect(find.text('该错误没有保存截图。'), findsOneWidget);
+    expect(find.byType(ActionPathCard), findsNothing);
     expect(controller.exportingErrorReport.value, isFalse);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());

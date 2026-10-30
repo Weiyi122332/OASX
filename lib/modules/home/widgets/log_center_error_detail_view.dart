@@ -1,6 +1,6 @@
 part of 'log_center_panel.dart';
 
-/// Error report export and task-colored action map.
+/// Error report export and screenshots captured with the error.
 class LogCenterErrorDetailView extends StatelessWidget {
   const LogCenterErrorDetailView({
     super.key,
@@ -209,16 +209,51 @@ class LogCenterErrorDetailView extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.only(bottom: 12),
                             child: Text(
-                              '日志超过接口上限（1 MiB），报告与点击图仅包含返回部分。',
+                              '日志超过接口上限（1 MiB），报告仅包含返回的日志部分。',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: colors.error,
                               ),
                             ),
                           ),
-                        ActionPathCard(
-                          key: ValueKey(detail.id),
-                          data: analyzeErrorLog(detail),
-                          colorByTask: true,
+                        _ErrorDetailSection(
+                          borderColor: colors.outlineVariant,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.image_outlined,
+                                    size: 20,
+                                    color: colors.primary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '错误截图',
+                                    style: theme.textTheme.titleSmall,
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    '${detail.images.length} 张',
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              if (detail.images.isEmpty)
+                                const Text('该错误没有保存截图。')
+                              else
+                                for (final image in detail.images) ...[
+                                  LogCenterErrorImageCard(
+                                    key: ValueKey('${detail.id}/${image.name}'),
+                                    controller: controller,
+                                    detail: detail,
+                                    image: image,
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                            ],
+                          ),
                         ),
                       ],
                     ),

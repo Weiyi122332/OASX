@@ -24,7 +24,7 @@ extension ScriptLogBrowserErrorsX on ScriptLogBrowserController {
     });
   }
 
-  /// No Markdown or image payload is produced before this action is invoked.
+  /// Generates the Markdown report only when the export action is invoked.
   Future<void> exportErrorReport() async {
     final detail = selectedErrorDetail.value;
     if (detail == null || exportingErrorReport.value) return;

@@ -24,6 +24,88 @@ ScriptErrorLogDetail detail(String text, {bool truncated = false}) =>
     );
 
 void main() {
+  test('task group errors belong to the failing child, not the group', () {
+    final text =
+        '${'═' * 40}\n${'─' * 15} TASKGROUP1 ${'─' * 15}\n${'═' * 40}\n'
+        '2026-10-29 09:35:48.935 | script.py:0625 | INFO | '
+        r'module_path: D:\oas\tasks\TaskGroup1\script_task.py'
+        '\n'
+        '${'═' * 15} TASK GROUP [5/8]: PETS ${'═' * 15}\n'
+        '2026-10-29 09:45:05.732 | INFO | Click (10, 20) @ PETS\n'
+        '2026-10-29 09:45:58.864 | INFO | Task group: `Pets` finished. Pets\n'
+        '${'═' * 15} TASK GROUP [7/8]: WANTEDQUESTS ${'═' * 15}\n'
+        '2026-10-29 09:46:33.831 | logger.py:0458 | INFO | '
+        'TASK GROUP [7/8]: WANTEDQUESTS\n'
+        '${'─' * 15} GENERAL BATTLE START ${'─' * 15}\n'
+        '2026-10-29 09:48:30.000 | INFO | Click (30, 40) @ WQ_WQ_BOX\n'
+        '2026-10-29 09:48:30.364 | ERROR | '
+        'GameTooManyClickError: Too many click for a button: WQ_WQ_BOX\n'
+        '2026-10-29 09:48:31.093 | ERROR | '
+        'Task group `日常早`: `WantedQuests` raised GameTooManyClickError\n'
+        '2026-10-29 09:48:31.103 | INFO | Task group `TaskGroup1`: start_index -> 7\n'
+        'GameTooManyClickError: Too many click for a button: WQ_WQ_BOX';
+
+    final summary = ErrorLogSummary.parse(text);
+    expect(summary.task, 'WantedQuests');
+    expect(summary.type, 'GameTooManyClickError');
+    expect(buildErrorMarkdown(detail(text), []), contains('任务：WantedQuests'));
+    expect(analyzeErrorLog(detail(text)).events.map((event) => event.task), [
+      'Pets',
+      'WantedQuests',
+    ]);
+  });
+  test('saved child boundaries work without a scheduler or group heading', () {
+    for (final boundary in [
+      '${'═' * 15} TASK GROUP [7/8]: WANTEDQUESTS ${'═' * 15}',
+      '2026-10-29 09:46:33.831 | logger.py:0458 | INFO | '
+          'TASK GROUP [7/8]: WANTEDQUESTS',
+    ]) {
+      expect(
+        ErrorLogSummary.parse('$boundary\nGameStuckError: stuck').task,
+        'WantedQuests',
+      );
+    }
+  });
+  test(
+    'group failure messages recover the child when its boundary is absent',
+    () {
+      const text =
+          '[Task] TaskGroup1 (Enable)\n'
+          '2026-10-29 09:48:31.093 | ERROR | '
+          'Task group `日常 | 早`: `WantedQuests` raised GameTooManyClickError\n'
+          'GameTooManyClickError: stuck';
+      expect(ErrorLogSummary.parse(text).task, 'WantedQuests');
+    },
+  );
+  test('task settings export loads the failing child configuration', () async {
+    String? requestedConfig;
+    String? requestedTask;
+    final settings = await loadErrorTaskSettings(
+      detail(
+        '[Task] TaskGroup1 (Enable)\n'
+        '${'═' * 15} TASK GROUP [7/8]: WANTEDQUESTS ${'═' * 15}\n'
+        'GameTooManyClickError: stuck',
+      ),
+      load: (config, task) async {
+        requestedConfig = config;
+        requestedTask = task;
+        return const ErrorTaskSettings({
+          'wanted_quests_config': {'enable': true},
+        });
+      },
+    );
+    expect(requestedConfig, 'demo');
+    expect(requestedTask, 'WantedQuests');
+    expect(settings.values, contains('wanted_quests_config'));
+  });
+  test('a later child heading does not change an earlier error owner', () {
+    final text =
+        '[Task] TaskGroup1 (Enable)\n'
+        '${'═' * 15} TASK GROUP [1/2]: WANTEDQUESTS ${'═' * 15}\n'
+        'GameStuckError: stuck\n'
+        '${'═' * 15} TASK GROUP [2/2]: REALMRAID ${'═' * 15}\n';
+    expect(ErrorLogSummary.parse(text).task, 'WantedQuests');
+  });
   test(
     'settings stay attached to the last error, not a later task heading',
     () {
