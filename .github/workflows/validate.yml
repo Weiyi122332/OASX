@@ -19,7 +19,7 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - name: Regression tests
         run: >-
-          flutter test --concurrency=1 test/illustration_test.dart test/log_api_regression_test.dart test/error_report_test.dart test/error_analysis_widget_test.dart
+          flutter test --concurrency=1 test/illustration_test.dart test/log_api_regression_test.dart test/error_report_test.dart test/error_analysis_widget_test.dart test/error_screenshot_widget_test.dart
           test/script_analysis_models_test.dart test/script_log_browser_error_render_test.dart
           test/script_log_browser_error_detail_render_test.dart test/script_log_browser_copy_test.dart
           test/script_log_browser_resume_policy_test.dart test/file_save_io_test.dart

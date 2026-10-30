@@ -179,7 +179,7 @@ jobs:
       - name: Test error report integration
         # Validate the user-facing changes before packaging a release.
         shell: pwsh
-        run: flutter test --concurrency=1 test/illustration_test.dart test/log_api_regression_test.dart test/error_report_test.dart test/error_analysis_widget_test.dart test/script_analysis_models_test.dart
+        run: flutter test --concurrency=1 test/illustration_test.dart test/log_api_regression_test.dart test/error_report_test.dart test/error_analysis_widget_test.dart test/error_screenshot_widget_test.dart test/script_analysis_models_test.dart
 
       - name: Compile Windows app
         shell: pwsh
