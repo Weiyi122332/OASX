@@ -5,6 +5,7 @@ import 'package:oasx/modules/home/models/home_workbench_layout.dart';
 import 'package:oasx/modules/home/widgets/log_center_panel.dart';
 import 'package:oasx/modules/home/widgets/statistics_panel.dart';
 import 'package:oasx/modules/home/widgets/analysis_panel.dart';
+import 'package:oasx/modules/home/widgets/resource_inventory_panel.dart';
 import 'package:oasx/translation/i18n_content.dart';
 
 /// Hosts the desktop right sidebar for statistics and logs.
@@ -56,10 +57,15 @@ class WorkbenchSidebarPanel extends StatelessWidget {
               Expanded(
                 child: switch (currentTab) {
                   HomeWorkbenchTab.stats => const ScriptStatisticsPanel(),
-                  HomeWorkbenchTab.logs =>
-                    LogCenterPanel(scriptName: scriptName),
-                  HomeWorkbenchTab.analysis =>
-                    ScriptAnalysisPanel(scriptName: scriptName),
+                  HomeWorkbenchTab.logs => LogCenterPanel(
+                    scriptName: scriptName,
+                  ),
+                  HomeWorkbenchTab.analysis => ScriptAnalysisPanel(
+                    scriptName: scriptName,
+                  ),
+                  HomeWorkbenchTab.resources => ResourceInventoryPanel(
+                    scriptName: scriptName,
+                  ),
                   _ => const SizedBox.shrink(),
                 },
               ),
@@ -76,6 +82,7 @@ class WorkbenchSidebarPanel extends StatelessWidget {
       HomeWorkbenchTab.stats => I18n.homeStatsTab.tr,
       HomeWorkbenchTab.logs => I18n.log.tr,
       HomeWorkbenchTab.analysis => I18n.homeAnalysisTab.tr,
+      HomeWorkbenchTab.resources => I18n.homeResourcesTab.tr,
       _ => '',
     };
   }

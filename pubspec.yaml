@@ -3,7 +3,7 @@ description: The GUI of OAS
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
-version: 2026.10.30+17
+version: 2026.10.31+18
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -124,6 +124,7 @@ flutter:
     - assets/release.txt
     - assets/images/Icon-app.png
     - assets/images/Icon-app.ico
+    - assets/images/resources/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

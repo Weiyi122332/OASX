@@ -143,6 +143,27 @@ final Map<String, String> _us_ui = {
   I18n.homeStatusTab: 'Status',
   I18n.homeTasksTab: 'Tasks',
   I18n.homeStatsTab: 'Stats',
+  I18n.homeResourcesTab: 'Resources',
+  I18n.resourceLatest: 'Latest resources',
+  I18n.resourceEmpty:
+      'No resource snapshot yet. Run Resource Inventory from Tasks.',
+  I18n.resourceSchedule:
+      'Collect daily at 23:00 Beijing time. Keep this script running; collection waits for the current task to finish. Daily snapshots are retained.',
+  I18n.resourceScheduleDisabled:
+      'Automatic collection is disabled. Enable Resource Inventory in Tasks. Saved daily snapshots are retained.',
+  I18n.resourceCustomSchedule:
+      'Custom collection schedule: @cron. Keep this script running. Daily snapshots are retained.',
+  I18n.resourceCoins: 'Coins',
+  I18n.resourceStamina: 'AP',
+  I18n.resourceJade: 'Jade',
+  I18n.resourceAmulets: 'Mystery amulets',
+  I18n.resourceAmuletHint: 'Excludes limited-time tickets',
+  I18n.resourceCompact: 'Abbreviated in-game value',
+  I18n.resourceUnknown: 'Unrecognized',
+  I18n.resourcePartial: 'Some resources could not be read. Check the task log.',
+  I18n.resourceRefresh: 'Refresh resource data',
+  I18n.resourceReadFailed:
+      'Could not load resources. Check the backend connection and version.',
   I18n.homeAnalysisTab: 'Analysis',
   I18n.homeAnalysisClicks: 'Clicks',
   I18n.homeAnalysisRandomClicks: 'Random clicks',
