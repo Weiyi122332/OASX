@@ -8,6 +8,8 @@ class MultiEnumDropdown extends StatelessWidget {
     required this.onChanged,
     this.errorText,
     this.enabled = true,
+    this.maxSelections,
+    this.optionLabel,
   });
 
   final List<String> value;
@@ -15,53 +17,61 @@ class MultiEnumDropdown extends StatelessWidget {
   final ValueChanged<List<String>> onChanged;
   final String? errorText;
   final bool enabled;
+  final int? maxSelections;
+  final String Function(String)? optionLabel;
 
   static const double _menuMaxHeight = 288;
 
   @override
   Widget build(BuildContext context) {
     final selected = value.toSet();
-    final label = options
-        .where(selected.contains)
-        .map((option) => option.tr)
-        .join(', ');
+    String display(String option) => optionLabel?.call(option) ?? option.tr;
+    final label = options.where(selected.contains).map(display).join(', ');
 
     return MenuAnchor(
       menuChildren: [
         ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: _menuMaxHeight),
-          child: Scrollbar(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: options.map((option) {
-                  final isSelected = selected.contains(option);
-                  return MenuItemButton(
-                    closeOnActivate: false,
-                    trailingIcon: IgnorePointer(
-                      child: Checkbox(value: isSelected, onChanged: (_) {}),
-                    ),
-                    onPressed: enabled
-                        ? () {
-                            final next = selected.toSet();
-                            isSelected
-                                ? next.remove(option)
-                                : next.add(option);
-                            onChanged(
-                              options
-                                  .where(next.contains)
-                                  .toList(growable: false),
-                            );
-                          }
-                        : null,
-                    child: Text(
-                      option.tr,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  );
-                }).toList(growable: false),
-              ),
+          child: SingleChildScrollView(
+            primary: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: options
+                  .map((option) {
+                    final isSelected = selected.contains(option);
+                    return MenuItemButton(
+                      closeOnActivate: false,
+                      trailingIcon: IgnorePointer(
+                        child: Checkbox(value: isSelected, onChanged: (_) {}),
+                      ),
+                      onPressed: enabled
+                          ? () {
+                              final next = selected.toSet();
+                              if (isSelected) {
+                                next.remove(option);
+                              } else {
+                                if (maxSelections == 1) next.clear();
+                                if (maxSelections != null &&
+                                    next.length >= maxSelections!) {
+                                  return;
+                                }
+                                next.add(option);
+                              }
+                              onChanged(
+                                options
+                                    .where(next.contains)
+                                    .toList(growable: false),
+                              );
+                            }
+                          : null,
+                      child: Text(
+                        display(option),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  })
+                  .toList(growable: false),
             ),
           ),
         ),

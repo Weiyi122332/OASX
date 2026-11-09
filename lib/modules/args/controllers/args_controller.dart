@@ -12,8 +12,9 @@ class ArgsController extends GetxController {
   static const String schedulerGroup = 'scheduler';
   static const String nextRunArg = 'next_run';
   static const String enableArg = 'enable';
-  static final RegExp _dateTimePattern =
-      RegExp(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$');
+  static final RegExp _dateTimePattern = RegExp(
+    r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$',
+  );
   static final RegExp _timePattern = RegExp(r'^\d{2}:\d{2}:\d{2}$');
   static final RegExp _timeDeltaPattern = RegExp(r'^\d{2,} \d{2}:\d{2}:\d{2}$');
 
@@ -73,8 +74,10 @@ class ArgsController extends GetxController {
       for (final argument in entry.value) {
         arguments.add(ArgumentModel.fromJson(argument));
       }
-      groupsMap[entry.key] =
-          GroupsModel(groupName: entry.key, members: arguments);
+      groupsMap[entry.key] = GroupsModel(
+        groupName: entry.key,
+        members: arguments,
+      );
     }
     groupsData.value = groupsMap;
     groupsName.value = names;
@@ -85,7 +88,11 @@ class ArgsController extends GetxController {
   }
 
   Future<dynamic> getArgValue(
-      String config, String task, String group, String argument) {
+    String config,
+    String task,
+    String group,
+    String argument,
+  ) {
     if (groupsData.value.isEmpty) {
       loadGroups(config: config, task: task);
     }
@@ -95,13 +102,25 @@ class ArgsController extends GetxController {
         .value;
   }
 
-  Future<bool> setArgument(String? config, String? task, String group,
-      String argument, String type, dynamic value) async {
+  Future<bool> setArgument(
+    String? config,
+    String? task,
+    String group,
+    String argument,
+    String type,
+    dynamic value,
+  ) async {
     if (config == null || task == null || config.isEmpty || task.isEmpty) {
       return false;
     }
-    final ret = await ApiClient()
-        .putScriptArg(config, task, group, argument, type, value);
+    final ret = await ApiClient().putScriptArg(
+      config,
+      task,
+      group,
+      argument,
+      type,
+      value,
+    );
     if (ret && group == schedulerGroup) {
       await Get.find<WebSocketService>().send(config, 'get_schedule');
     }
@@ -109,18 +128,37 @@ class ArgsController extends GetxController {
   }
 
   Future<bool> updateScriptTaskNextRun(
-      String config, String task, String nextRun) async {
+    String config,
+    String task,
+    String nextRun,
+  ) async {
     return setArgument(
-        config, task, schedulerGroup, nextRunArg, 'next_run', nextRun);
+      config,
+      task,
+      schedulerGroup,
+      nextRunArg,
+      'next_run',
+      nextRun,
+    );
   }
 
   Future<bool> updateScriptTask(String config, String task, bool enable) async {
     return setArgument(
-        config, task, schedulerGroup, enableArg, 'boolean', enable);
+      config,
+      task,
+      schedulerGroup,
+      enableArg,
+      'boolean',
+      enable,
+    );
   }
 
   void stageArgumentChange(
-      String group, String argument, dynamic value, String type) {
+    String group,
+    String argument,
+    dynamic value,
+    String type,
+  ) {
     final model = findArgument(group, argument);
     if (model == null) {
       return;
@@ -174,8 +212,8 @@ class ArgsController extends GetxController {
       return null;
     }
     return groupModel.members.cast<ArgumentModel>().firstWhereOrNull(
-          (item) => item.title == argument,
-        );
+      (item) => item.title == argument,
+    );
   }
 
   bool isFieldDirty(String group, String argument) {
@@ -279,9 +317,10 @@ class ArgsController extends GetxController {
       'date_time' =>
         _dateTimePattern.hasMatch(current) ? null : I18n.argsInvalidDateTime.tr,
       'time' => _timePattern.hasMatch(current) ? null : I18n.argsInvalidTime.tr,
-      'time_delta' => _timeDeltaPattern.hasMatch(current)
-          ? null
-          : I18n.argsInvalidTimeDelta.tr,
+      'time_delta' =>
+        _timeDeltaPattern.hasMatch(current)
+            ? null
+            : I18n.argsInvalidTimeDelta.tr,
       'enum' => _validateEnum(model, current),
       'multi_enum' => _validateMultiEnum(model, value),
       'task_list' => _validateTaskList(model, value),
@@ -311,25 +350,19 @@ class ArgsController extends GetxController {
     required dynamic value,
   }) async {
     if (_saveArgumentOverride != null) {
-      return _saveArgumentOverride!(
-        config,
-        task,
-        group,
-        argument,
-        type,
-        value,
-      );
+      return _saveArgumentOverride!(config, task, group, argument, type, value);
     }
     return setArgument(config, task, group, argument, type, value);
   }
 
   List<String> _normalizeScope(List<String> raw, String config) {
-    final result = raw
-        .map((item) => item.trim())
-        .where((item) => item.isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort();
+    final result =
+        raw
+            .map((item) => item.trim())
+            .where((item) => item.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
     if (config.isNotEmpty && !result.contains(config)) {
       result.insert(0, config);
     }
@@ -371,6 +404,9 @@ class ArgsController extends GetxController {
   String? _validateMultiEnum(ArgumentModel model, dynamic value) {
     final options = model.enumEnum ?? const <String>[];
     final selected = ArgumentModel.normalizeMultiEnumValue(value);
+    if (model.maxItems == 1 && selected.length > 1) {
+      return I18n.argsInvalidEnum.tr;
+    }
     if (options.isEmpty || selected.every(options.contains)) {
       return null;
     }
@@ -452,8 +488,13 @@ class ArgumentModel {
   final dynamic minimum;
   final dynamic maximum;
   final dynamic defaultValue;
+
   /// 列表类型的参数最多能放几项（服务端给的，例如任务组最多 10 个任务）
   final int? maxItems;
+  final bool hidden;
+  final dynamic groupTitle;
+  final dynamic uiLayout;
+  final Map<dynamic, dynamic> uiText;
 
   ArgumentModel(
     this.enumEnum,
@@ -465,6 +506,10 @@ class ArgumentModel {
     required this.value,
     required this.type,
     this.maxItems,
+    this.hidden = false,
+    this.groupTitle,
+    this.uiLayout,
+    this.uiText = const {},
   });
 
   factory ArgumentModel.fromJson(Map<String, dynamic> json) {
@@ -473,7 +518,7 @@ class ArgumentModel {
       List<String>.from(json['enumEnum']?.map((item) => item) ?? []),
       json['minimum'],
       json['maximum'],
-      json['defaultValue'],
+      json['defaultValue'] ?? json['default'],
       json['description'],
       title: json['name'] as String,
       value: listArgumentTypes.contains(type)
@@ -481,7 +526,28 @@ class ArgumentModel {
           : json['value'],
       type: type,
       maxItems: _asInt(json['maxItems']),
+      hidden: json['ui_hidden'] == true,
+      groupTitle: json['ui_group_title'],
+      uiLayout: json['ui_layout'],
+      uiText: json['ui_text'] is Map ? json['ui_text'] as Map : const {},
     );
+  }
+
+  Map<dynamic, dynamic> get _localizedSettings {
+    final locale = Get.locale?.toString().replaceAll('-', '_') ?? 'zh_CN';
+    final value = uiText[locale] ?? uiText['en_US'] ?? uiText['zh_CN'];
+    return value is Map ? value : const {};
+  }
+
+  String get displayTitle =>
+      _settingsText(_localizedSettings['title'], title.tr);
+
+  String get displayDescription =>
+      _settingsText(_localizedSettings['description'], description?.tr ?? '');
+
+  String displayOption(String option) {
+    final options = _localizedSettings['options'];
+    return _settingsText(options is Map ? options[option] : null, option.tr);
   }
 
   static int? _asInt(dynamic value) {
@@ -505,9 +571,7 @@ class ArgumentModel {
       try {
         final decoded = jsonDecode(value);
         if (decoded is List) {
-          return decoded
-              .map((item) => item.toString())
-              .toList(growable: false);
+          return decoded.map((item) => item.toString()).toList(growable: false);
         }
       } on FormatException {
         // An invalid stored value is treated as an empty selection.
@@ -520,10 +584,7 @@ class ArgumentModel {
 }
 
 class _FieldDescriptor {
-  const _FieldDescriptor({
-    required this.group,
-    required this.argument,
-  });
+  const _FieldDescriptor({required this.group, required this.argument});
 
   final String group;
   final String argument;

@@ -357,6 +357,7 @@ class I18n {
       duel = 'Duel',
       activityShikigami = 'ActivityShikigami';
   static const String metaDemon = 'MetaDemon',
+      metaDemonTicket = 'MetaDemonTicket',
       memoryScrolls = 'MemoryScrolls',
       demonRetreat = 'DemonRetreat';
   static const String dyeTrials = 'DyeTrials',

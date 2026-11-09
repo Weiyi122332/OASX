@@ -52,6 +52,7 @@ final Map<String, String> _cn_menu = {
   I18n.duel: '斗技',
   I18n.activityShikigami: '当期爬塔',
   I18n.metaDemon: '超鬼王',
+  I18n.metaDemonTicket: '超鬼王刷票',
   I18n.memoryScrolls: '绘卷',
   I18n.demonRetreat: '首领退治',
   I18n.dyeTrials: '灵染试炼',

@@ -30,25 +30,28 @@ part 'widgets/argument_view.dart';
 part 'widgets/argument_view_actions.dart';
 part 'widgets/multi_enum_dropdown.dart';
 part 'widgets/task_list_editor.dart';
+part 'widgets/settings_layout.dart';
 part 'controllers/args_controller.dart';
 
-typedef SetArgumentCallback = void Function(
-  String? config,
-  String? task,
-  String group,
-  String argument,
-  String type,
-  dynamic value,
-);
+typedef SetArgumentCallback =
+    void Function(
+      String? config,
+      String? task,
+      String group,
+      String argument,
+      String type,
+      dynamic value,
+    );
 
-typedef SaveArgumentCallback = Future<bool> Function(
-  String config,
-  String task,
-  String group,
-  String argument,
-  String type,
-  dynamic value,
-);
+typedef SaveArgumentCallback =
+    Future<bool> Function(
+      String config,
+      String task,
+      String group,
+      String argument,
+      String type,
+      dynamic value,
+    );
 
 class Args extends StatelessWidget {
   const Args({
@@ -80,89 +83,111 @@ class Args extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetX<ArgsController>(builder: (controller) {
-      final selectedScript =
-          (scriptName ?? Get.parameters['script'] ?? '').trim();
-      final selectedTask = (taskName ?? Get.parameters['task'] ?? '').trim();
-      final groupNames = controller.groupsName.value;
-      final content = LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: constraints.maxWidth),
-              child: ExpansionTileGroup(
-                spaceBetweenItem: 10,
-                children: groupNames
-                    .map(
-                      (name) => ExpansionTileItem(
-                        key: ValueKey<String>(
-                          'args-group-$selectedScript-$selectedTask-$name',
-                        ),
-                        initiallyExpanded: true,
-                        isHasTopBorder: false,
-                        isHasBottomBorder: false,
-                        backgroundColor: _groupBackgroundColor(
-                          context,
-                          selectedScript,
-                          selectedTask,
-                          name,
-                        ),
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(10)),
-                        title: <Widget>[
-                          if (groupDraggable)
-                            _buildGroupDragHandle(
-                              context,
-                              selectedScript,
-                              selectedTask,
-                              name,
-                            ),
-                          Text(name.tr),
-                        ].toRow(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                        ),
-                        children: _children(
-                          groupName: name,
-                          selectedScript: selectedScript,
-                          selectedTask: selectedTask,
-                        ),
+    return GetX<ArgsController>(
+      builder: (controller) {
+        final selectedScript = (scriptName ?? Get.parameters['script'] ?? '')
+            .trim();
+        final selectedTask = (taskName ?? Get.parameters['task'] ?? '').trim();
+        final groupNames = controller.groupsName.value;
+        final panels = _settingsPanels(controller.groupsData.value, groupNames);
+        final content = LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: ExpansionTileGroup(
+                  spaceBetweenItem: 10,
+                  children: panels.map((panel) {
+                    final singleGroup = panel.groups.length == 1
+                        ? panel.groups.single.name
+                        : null;
+                    return ExpansionTileItem(
+                      key: ValueKey<String>(
+                        'args-group-$selectedScript-$selectedTask-${panel.id}',
                       ),
-                    )
-                    .toList(),
+                      initiallyExpanded: true,
+                      isHasTopBorder: false,
+                      isHasBottomBorder: false,
+                      backgroundColor: _groupBackgroundColor(
+                        context,
+                        selectedScript,
+                        selectedTask,
+                        panel.id,
+                      ),
+                      borderRadius: const BorderRadius.all(Radius.circular(10)),
+                      title:
+                          <Widget>[
+                            if (groupDraggable && singleGroup != null)
+                              _buildGroupDragHandle(
+                                context,
+                                selectedScript,
+                                selectedTask,
+                                singleGroup,
+                              ),
+                            Text(panel.title),
+                          ].toRow(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                          ),
+                      children: [
+                        for (final group in panel.groups) ...[
+                          if (groupDraggable && singleGroup == null)
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: _buildGroupDragHandle(
+                                context,
+                                selectedScript,
+                                selectedTask,
+                                group.name,
+                              ),
+                            ),
+                          ..._children(
+                            group: group,
+                            selectedScript: selectedScript,
+                            selectedTask: selectedTask,
+                          ),
+                        ],
+                      ],
+                    );
+                  }).toList(),
+                ),
               ),
+            );
+          },
+        );
+        if (!stagingMode) {
+          return content;
+        }
+        return Column(
+          children: [
+            Expanded(child: content),
+            ArgsDraftBar(
+              scriptName: selectedScript,
+              taskName: selectedTask,
+              onCancel: onCancel,
             ),
-          );
-        },
-      );
-      if (!stagingMode) {
-        return content;
-      }
-      return Column(
-        children: [
-          Expanded(child: content),
-          ArgsDraftBar(
-            scriptName: selectedScript,
-            taskName: selectedTask,
-            onCancel: onCancel,
-          ),
-        ],
-      );
-    });
+          ],
+        );
+      },
+    );
   }
 
   List<Widget> _children({
-    required String groupName,
+    required _SettingsFields group,
     required String selectedScript,
     required String selectedTask,
   }) {
     final controller = Get.find<ArgsController>();
     final setArgument = setArgumentOverride ?? controller.setArgument;
+    final groupName = group.name;
     final groupsModel = controller.groupsData.value[groupName]!;
     final result = <Widget>[const Divider()];
     for (int i = 0; i < groupsModel.members.length; i++) {
       final member = groupsModel.members[i] as ArgumentModel;
+      if (!group.names.contains(member.title)) {
+        continue;
+      }
       result.add(
         ArgumentView(
           key: ValueKey<String>(
@@ -172,6 +197,9 @@ class Args extends StatelessWidget {
           taskName: taskName,
           setArgument: setArgument,
           getGroupName: groupsModel.getGroupName,
+          displayTitle: group.labels[member.title] == null
+              ? null
+              : _settingsText(group.labels[member.title], member.displayTitle),
           lockImmediateScheduling: lockImmediateScheduling,
           index: i,
         ),
@@ -186,10 +214,9 @@ class Args extends StatelessWidget {
     String selectedTask,
     String groupName,
   ) {
-    return Theme.of(context)
-        .colorScheme
-        .secondaryContainer
-        .withValues(alpha: 0.24);
+    return Theme.of(
+      context,
+    ).colorScheme.secondaryContainer.withValues(alpha: 0.24);
   }
 
   Widget _buildGroupDragHandle(
@@ -269,16 +296,10 @@ class ArgsDraftBar extends StatelessWidget {
                         final contextText = scriptName.isEmpty
                             ? localizedTaskName
                             : '$scriptName / $localizedTaskName';
-                        Get.snackbar(
-                          I18n.settingSaved.tr,
-                          contextText,
-                        );
+                        Get.snackbar(I18n.settingSaved.tr, contextText);
                         return;
                       }
-                      Get.snackbar(
-                        I18n.error.tr,
-                        I18n.argsValidationFailed.tr,
-                      );
+                      Get.snackbar(I18n.error.tr, I18n.argsValidationFailed.tr);
                     },
               icon: controller.isSavingDraft.value
                   ? const SizedBox(
