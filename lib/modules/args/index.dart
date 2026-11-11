@@ -130,25 +130,28 @@ class Args extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                           ),
-                      children: [
-                        for (final group in panel.groups) ...[
-                          if (groupDraggable && singleGroup == null)
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: _buildGroupDragHandle(
-                                context,
-                                selectedScript,
-                                selectedTask,
-                                group.name,
+                      children: panel.variants.isEmpty
+                          ? _panelFields(
+                              context,
+                              panel,
+                              selectedScript,
+                              selectedTask,
+                              showGroupHandles: singleGroup == null,
+                            )
+                          : [
+                              _SettingsVariantPicker(
+                                variants: panel.variants,
+                                buildFields: (variant) => Column(
+                                  children: _panelFields(
+                                    context,
+                                    variant,
+                                    selectedScript,
+                                    selectedTask,
+                                    showGroupHandles: true,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ..._children(
-                            group: group,
-                            selectedScript: selectedScript,
-                            selectedTask: selectedTask,
-                          ),
-                        ],
-                      ],
+                            ],
                     );
                   }).toList(),
                 ),
@@ -172,6 +175,32 @@ class Args extends StatelessWidget {
       },
     );
   }
+
+  List<Widget> _panelFields(
+    BuildContext context,
+    _SettingsPanel panel,
+    String selectedScript,
+    String selectedTask, {
+    required bool showGroupHandles,
+  }) => [
+    for (final group in panel.groups) ...[
+      if (groupDraggable && showGroupHandles)
+        Align(
+          alignment: Alignment.centerLeft,
+          child: _buildGroupDragHandle(
+            context,
+            selectedScript,
+            selectedTask,
+            group.name,
+          ),
+        ),
+      ..._children(
+        group: group,
+        selectedScript: selectedScript,
+        selectedTask: selectedTask,
+      ),
+    ],
+  ];
 
   List<Widget> _children({
     required _SettingsFields group,

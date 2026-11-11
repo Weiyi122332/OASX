@@ -19,11 +19,17 @@ class _SettingsFields {
 }
 
 class _SettingsPanel {
-  const _SettingsPanel(this.id, this.title, this.groups);
+  const _SettingsPanel(
+    this.id,
+    this.title,
+    this.groups, {
+    this.variants = const [],
+  });
 
   final String id;
   final String title;
   final List<_SettingsFields> groups;
+  final List<_SettingsPanel> variants;
 }
 
 List<_SettingsPanel> _settingsPanels(
@@ -40,9 +46,9 @@ List<_SettingsPanel> _settingsPanels(
   };
   final result = <_SettingsPanel>[];
 
-  void addPanel(String id, String title, dynamic specs) {
-    if (specs is! List) return;
+  List<_SettingsFields> takeFields(dynamic specs) {
     final fields = <_SettingsFields>[];
+    if (specs is! List) return fields;
     for (final spec in specs.whereType<Map>()) {
       final name = spec['name'];
       final available = remaining[name];
@@ -58,7 +64,7 @@ List<_SettingsPanel> _settingsPanels(
       );
       available.removeAll(selected);
     }
-    if (fields.isNotEmpty) result.add(_SettingsPanel(id, title, fields));
+    return fields;
   }
 
   final settings = groups['settings_layout_config']?.members
@@ -77,14 +83,32 @@ List<_SettingsPanel> _settingsPanels(
         final title = _settingsText(section['title'], id.tr);
         final variants = section['variants'];
         if (variants is List && variants.isNotEmpty) {
+          final variantPanels = <_SettingsPanel>[];
+          final usePicker = section['select_variant'] == true;
           for (final variant in variants.whereType<Map>()) {
             final key = variant['id'];
             if (key is! String) continue;
             final label = _settingsText(variant['label'], key.tr);
-            addPanel('$id-$key', '$title · $label', variant['groups']);
+            final fields = takeFields(variant['groups']);
+            if (fields.isEmpty) continue;
+            variantPanels.add(
+              _SettingsPanel(
+                '$id-$key',
+                usePicker ? label : '$title · $label',
+                fields,
+              ),
+            );
+          }
+          if (usePicker && variantPanels.isNotEmpty) {
+            result.add(
+              _SettingsPanel(id, title, const [], variants: variantPanels),
+            );
+          } else {
+            result.addAll(variantPanels);
           }
         } else {
-          addPanel(id, title, section['groups']);
+          final fields = takeFields(section['groups']);
+          if (fields.isNotEmpty) result.add(_SettingsPanel(id, title, fields));
         }
       }
     }
@@ -101,4 +125,54 @@ List<_SettingsPanel> _settingsPanels(
     );
   }
   return result;
+}
+
+class _SettingsVariantPicker extends StatefulWidget {
+  const _SettingsVariantPicker({
+    required this.variants,
+    required this.buildFields,
+  });
+
+  final List<_SettingsPanel> variants;
+  final Widget Function(_SettingsPanel) buildFields;
+
+  @override
+  State<_SettingsVariantPicker> createState() => _SettingsVariantPickerState();
+}
+
+class _SettingsVariantPickerState extends State<_SettingsVariantPicker> {
+  String? _selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = widget.variants.any((variant) => variant.id == _selected)
+        ? _selected!
+        : widget.variants.first.id;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: DropdownButton<String>(
+            isExpanded: true,
+            value: selected,
+            onChanged: (value) => setState(() => _selected = value),
+            items: [
+              for (final variant in widget.variants)
+                DropdownMenuItem(
+                  value: variant.id,
+                  child: Text(variant.title, overflow: TextOverflow.ellipsis),
+                ),
+            ],
+          ),
+        ),
+        for (final variant in widget.variants)
+          Visibility(
+            key: ValueKey(variant.id),
+            visible: variant.id == selected,
+            maintainState: true,
+            child: widget.buildFields(variant),
+          ),
+      ],
+    );
+  }
 }

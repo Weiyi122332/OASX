@@ -77,26 +77,95 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('selecting assistance replaces the battle mode', (tester) async {
-    final changes = <List<String>>[];
+  testWidgets('switching presets saves each group independently', (
+    tester,
+  ) async {
+    final controller = Get.put(ArgsController());
+    const groups = {'low_star_preset': '1–4 星通用', 'tsukuyomi_preset': '月读'};
+    controller.loadModel({
+      'settings_layout_config': [
+        {
+          'name': 'merged_settings_enable',
+          'type': 'boolean',
+          'value': true,
+          'ui_hidden': true,
+          'ui_layout': {
+            'version': 1,
+            'sections': [
+              {
+                'id': 'quick_presets',
+                'title': {'zh_CN': '快速预设'},
+                'select_variant': true,
+                'variants': [
+                  for (final group in groups.entries)
+                    {
+                      'id': group.key,
+                      'label': {'zh_CN': group.value},
+                      'groups': [
+                        {'name': group.key},
+                      ],
+                    },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      for (final group in groups.keys)
+        group: [
+          {
+            'name': 'powerful_count',
+            'type': 'integer',
+            'value': group == 'low_star_preset' ? 0 : 2,
+            'ui_text': {
+              'zh_CN': {'title': '强力追击次数'},
+            },
+          },
+        ],
+    });
+    controller.groupsData.value = {
+      for (final group in controller.groups.value) group.groupName: group,
+    };
+    controller.groupsName.value = controller.groupsData.value.keys.toList();
+    final writes = <(String, String, dynamic)>[];
     await tester.pumpWidget(
-      MaterialApp(
+      GetMaterialApp(
+        locale: const Locale('zh', 'CN'),
         home: Scaffold(
-          body: MultiEnumDropdown(
-            value: const ['鬼王战斗'],
-            options: const ['鬼王战斗', '鬼王协助'],
-            maxSelections: 1,
-            onChanged: changes.add,
+          body: Args(
+            scriptName: 'fixture',
+            taskName: 'MetaDemon',
+            setArgumentOverride: (_, __, group, field, ___, value) {
+              writes.add((group, field, value));
+            },
           ),
         ),
       ),
     );
-    await tester.tap(find.text('鬼王战斗'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(MenuItemButton, '鬼王协助'));
+
+    expect(find.text('快速预设'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.text('0'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '3');
+    await tester.tap(find.byType(DropdownButton<String>));
     await tester.pumpAndSettle();
-    expect(changes, [
-      ['鬼王协助'],
+    await tester.tap(find.text('月读').last);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '5');
+    final picker = tester.widget<DropdownButton<String>>(
+      find.byType(DropdownButton<String>),
+    );
+    picker.onChanged!(picker.items!.first.value);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(writes, [
+      ('low_star_preset', 'powerful_count', '3'),
+      ('tsukuyomi_preset', 'powerful_count', '5'),
     ]);
   });
 }
