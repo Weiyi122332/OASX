@@ -64,6 +64,9 @@ class _ArgumentViewState extends State<ArgumentView> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      if (!_argsController._isArgumentVisible(widget.getGroupName(), model)) {
+        return const SizedBox.shrink();
+      }
       landscape = MediaQuery.of(context).orientation == Orientation.landscape;
       _syncTextController();
       final title = _title();

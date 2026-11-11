@@ -181,6 +181,7 @@ class ArgsController extends GetxController {
       fieldErrors.remove(key);
     }
     fieldErrors.refresh();
+    _refreshDependentFields(group, argument);
   }
 
   void discardDraftField(String group, String argument) {
@@ -215,6 +216,19 @@ class ArgsController extends GetxController {
     return groupModel.members.cast<ArgumentModel>().firstWhereOrNull(
       (item) => item.title == argument,
     );
+  }
+
+  bool _isArgumentVisible(String group, ArgumentModel model) => model
+      .visibleWhen
+      .entries
+      .every((entry) => findArgument(group, entry.key)?.value == entry.value);
+
+  void _refreshDependentFields(String group, String argument) {
+    final members = groupsData.value[group]?.members.cast<ArgumentModel>();
+    if (members?.any((model) => model.visibleWhen.containsKey(argument)) ==
+        true) {
+      groupsData.refresh();
+    }
   }
 
   bool isFieldDirty(String group, String argument) {
@@ -493,6 +507,7 @@ class ArgumentModel {
   /// 列表类型的参数最多能放几项（服务端给的，例如任务组最多 10 个任务）
   final int? maxItems;
   final bool hidden;
+  final Map<String, dynamic> visibleWhen;
   final dynamic groupTitle;
   final dynamic uiLayout;
   final Map<dynamic, dynamic> uiText;
@@ -508,6 +523,7 @@ class ArgumentModel {
     required this.type,
     this.maxItems,
     this.hidden = false,
+    this.visibleWhen = const {},
     this.groupTitle,
     this.uiLayout,
     this.uiText = const {},
@@ -528,6 +544,9 @@ class ArgumentModel {
       type: type,
       maxItems: _asInt(json['maxItems']),
       hidden: json['ui_hidden'] == true,
+      visibleWhen: json['ui_visible_when'] is Map<String, dynamic>
+          ? json['ui_visible_when'] as Map<String, dynamic>
+          : const {},
       groupTitle: json['ui_group_title'],
       uiLayout: json['ui_layout'],
       uiText: json['ui_text'] is Map ? json['ui_text'] as Map : const {},

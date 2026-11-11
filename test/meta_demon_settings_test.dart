@@ -20,8 +20,18 @@ class _ReloadingArgsController extends ArgsController {
   }
 }
 
-void _loadPresetArguments(ArgsController controller) {
+void _loadPresetArguments(
+  ArgsController controller, {
+  bool withRental = false,
+}) {
   const groups = {'low_star_preset': '1–4 星通用', 'tsukuyomi_preset': '月读'};
+  const rentalChoices = {
+    'meta_demon_rental_none': '不使用',
+    'meta_demon_rental_group': '群体',
+    'meta_demon_rental_single': '单体',
+    'meta_demon_rental_normal_attack': '普攻',
+  };
+  const personalOnly = {'rental_lineup': 'meta_demon_rental_none'};
   controller.loadModel({
     'settings_layout_config': [
       {
@@ -61,6 +71,29 @@ void _loadPresetArguments(ArgsController controller) {
             'zh_CN': {'title': '强力追击次数'},
           },
         },
+        if (withRental) ...[
+          {
+            'name': 'rental_lineup',
+            'type': 'enum',
+            'value': 'meta_demon_rental_none',
+            'enumEnum': rentalChoices.keys.toList(),
+            'ui_text': {
+              'zh_CN': {'title': '使用租借阵容', 'options': rentalChoices},
+            },
+          },
+          {
+            'name': 'switch_soul',
+            'type': 'boolean',
+            'value': true,
+            'ui_visible_when': personalOnly,
+          },
+          {
+            'name': 'preset_numbers',
+            'type': 'string',
+            'value': '1,1',
+            'ui_visible_when': personalOnly,
+          },
+        ],
       ],
   });
   controller.groupsData.value = {
@@ -239,5 +272,48 @@ void main() {
     expect(find.text('5'), findsOneWidget);
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('selecting a rental hides personal settings in that preset', (
+    tester,
+  ) async {
+    final controller = Get.put(ArgsController());
+    _loadPresetArguments(controller, withRental: true);
+    controller.isDraftMode.value = true;
+    await tester.pumpWidget(
+      const GetMaterialApp(
+        locale: Locale('zh', 'CN'),
+        home: Scaffold(
+          body: Args(scriptName: 'fixture', taskName: 'MetaDemon'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.drag_indicator_outlined), findsNothing);
+    expect(find.byType(Checkbox), findsOneWidget);
+    expect(find.text('1,1'), findsOneWidget);
+
+    final rental = find.byType(DropdownButtonFormField<String>);
+    await tester.tap(rental);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('群体').last);
+    await tester.pumpAndSettle();
+    expect(find.byType(Checkbox), findsNothing);
+    expect(find.text('1,1'), findsNothing);
+    expect(
+      controller.findArgument('low_star_preset', 'rental_lineup')?.value,
+      'meta_demon_rental_group',
+    );
+    expect(
+      controller.findArgument('tsukuyomi_preset', 'rental_lineup')?.value,
+      'meta_demon_rental_none',
+    );
+
+    await tester.tap(rental);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('不使用').last);
+    await tester.pumpAndSettle();
+    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
+    expect(find.text('1,1'), findsOneWidget);
   });
 }

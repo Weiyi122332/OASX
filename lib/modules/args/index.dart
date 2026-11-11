@@ -153,7 +153,7 @@ class Args extends StatelessWidget {
                                     variant,
                                     selectedScript,
                                     selectedTask,
-                                    showGroupHandles: true,
+                                    showGroupHandles: false,
                                   ),
                                 ),
                               ),
