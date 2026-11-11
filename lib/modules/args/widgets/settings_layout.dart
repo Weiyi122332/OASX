@@ -127,27 +127,26 @@ List<_SettingsPanel> _settingsPanels(
   return result;
 }
 
-class _SettingsVariantPicker extends StatefulWidget {
+class _SettingsVariantPicker extends StatelessWidget {
   const _SettingsVariantPicker({
+    required this.controller,
+    required this.section,
     required this.variants,
     required this.buildFields,
   });
 
+  final ArgsController controller;
+  final (String, String, String) section;
   final List<_SettingsPanel> variants;
   final Widget Function(_SettingsPanel) buildFields;
 
   @override
-  State<_SettingsVariantPicker> createState() => _SettingsVariantPickerState();
-}
-
-class _SettingsVariantPickerState extends State<_SettingsVariantPicker> {
-  String? _selected;
-
-  @override
-  Widget build(BuildContext context) {
-    final selected = widget.variants.any((variant) => variant.id == _selected)
-        ? _selected!
-        : widget.variants.first.id;
+  Widget build(BuildContext context) => Obx(() {
+    final selections = controller._selectedSettingsVariants;
+    final previous = selections[section];
+    final selected = variants.any((variant) => variant.id == previous)
+        ? previous!
+        : variants.first.id;
     return Column(
       children: [
         Padding(
@@ -155,9 +154,11 @@ class _SettingsVariantPickerState extends State<_SettingsVariantPicker> {
           child: DropdownButton<String>(
             isExpanded: true,
             value: selected,
-            onChanged: (value) => setState(() => _selected = value),
+            onChanged: (value) {
+              if (value != null) selections[section] = value;
+            },
             items: [
-              for (final variant in widget.variants)
+              for (final variant in variants)
                 DropdownMenuItem(
                   value: variant.id,
                   child: Text(variant.title, overflow: TextOverflow.ellipsis),
@@ -165,14 +166,14 @@ class _SettingsVariantPickerState extends State<_SettingsVariantPicker> {
             ],
           ),
         ),
-        for (final variant in widget.variants)
+        for (final variant in variants)
           Visibility(
             key: ValueKey(variant.id),
             visible: variant.id == selected,
             maintainState: true,
-            child: widget.buildFields(variant),
+            child: buildFields(variant),
           ),
       ],
     );
-  }
+  });
 }

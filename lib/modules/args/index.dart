@@ -140,6 +140,12 @@ class Args extends StatelessWidget {
                             )
                           : [
                               _SettingsVariantPicker(
+                                controller: controller,
+                                section: (
+                                  selectedScript,
+                                  selectedTask,
+                                  panel.id,
+                                ),
                                 variants: panel.variants,
                                 buildFields: (variant) => Column(
                                   children: _panelFields(

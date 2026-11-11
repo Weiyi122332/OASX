@@ -19,6 +19,7 @@ class ArgsController extends GetxController {
   static final RegExp _timeDeltaPattern = RegExp(r'^\d{2,} \d{2}:\d{2}:\d{2}$');
 
   final Map<String, dynamic> _originalValues = {};
+  final _selectedSettingsVariants = <(String, String, String), String>{}.obs;
   String _loadedConfig = '';
   String _loadedTask = '';
   List<String> _scopeScripts = const [];

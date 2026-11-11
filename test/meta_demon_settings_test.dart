@@ -3,6 +3,72 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:oasx/modules/args/index.dart';
 
+class _ReloadingArgsController extends ArgsController {
+  final revision = ValueNotifier(0);
+
+  @override
+  Future<bool> saveDraftChanges() async {
+    dirtyFieldKeys.clear();
+    revision.value++;
+    return true;
+  }
+
+  @override
+  void onClose() {
+    revision.dispose();
+    super.onClose();
+  }
+}
+
+void _loadPresetArguments(ArgsController controller) {
+  const groups = {'low_star_preset': '1–4 星通用', 'tsukuyomi_preset': '月读'};
+  controller.loadModel({
+    'settings_layout_config': [
+      {
+        'name': 'merged_settings_enable',
+        'type': 'boolean',
+        'value': true,
+        'ui_hidden': true,
+        'ui_layout': {
+          'version': 1,
+          'sections': [
+            {
+              'id': 'quick_presets',
+              'title': {'zh_CN': '快速预设'},
+              'select_variant': true,
+              'variants': [
+                for (final group in groups.entries)
+                  {
+                    'id': group.key,
+                    'label': {'zh_CN': group.value},
+                    'groups': [
+                      {'name': group.key},
+                    ],
+                  },
+              ],
+            },
+          ],
+        },
+      },
+    ],
+    for (final group in groups.keys)
+      group: [
+        {
+          'name': 'powerful_count',
+          'type': 'integer',
+          'value': group == 'low_star_preset' ? 0 : 2,
+          'ui_text': {
+            'zh_CN': {'title': '强力追击次数'},
+          },
+        },
+      ],
+  });
+  controller.groupsData.value = {
+    for (final group in controller.groups.value) group.groupName: group,
+  };
+  controller.groupsName.value = controller.groupsData.value.keys.toList();
+}
+
 void main() {
   tearDown(Get.reset);
 
@@ -81,52 +147,7 @@ void main() {
     tester,
   ) async {
     final controller = Get.put(ArgsController());
-    const groups = {'low_star_preset': '1–4 星通用', 'tsukuyomi_preset': '月读'};
-    controller.loadModel({
-      'settings_layout_config': [
-        {
-          'name': 'merged_settings_enable',
-          'type': 'boolean',
-          'value': true,
-          'ui_hidden': true,
-          'ui_layout': {
-            'version': 1,
-            'sections': [
-              {
-                'id': 'quick_presets',
-                'title': {'zh_CN': '快速预设'},
-                'select_variant': true,
-                'variants': [
-                  for (final group in groups.entries)
-                    {
-                      'id': group.key,
-                      'label': {'zh_CN': group.value},
-                      'groups': [
-                        {'name': group.key},
-                      ],
-                    },
-                ],
-              },
-            ],
-          },
-        },
-      ],
-      for (final group in groups.keys)
-        group: [
-          {
-            'name': 'powerful_count',
-            'type': 'integer',
-            'value': group == 'low_star_preset' ? 0 : 2,
-            'ui_text': {
-              'zh_CN': {'title': '强力追击次数'},
-            },
-          },
-        ],
-    });
-    controller.groupsData.value = {
-      for (final group in controller.groups.value) group.groupName: group,
-    };
-    controller.groupsName.value = controller.groupsData.value.keys.toList();
+    _loadPresetArguments(controller);
     final writes = <(String, String, dynamic)>[];
     await tester.pumpWidget(
       GetMaterialApp(
@@ -167,5 +188,56 @@ void main() {
       ('low_star_preset', 'powerful_count', '3'),
       ('tsukuyomi_preset', 'powerful_count', '5'),
     ]);
+  });
+
+  testWidgets('saving keeps the selected preset after settings reload', (
+    tester,
+  ) async {
+    final controller = _ReloadingArgsController();
+    Get.put<ArgsController>(controller);
+    _loadPresetArguments(controller);
+    await tester.pumpWidget(
+      GetMaterialApp(
+        locale: const Locale('zh', 'CN'),
+        home: Scaffold(
+          body: ValueListenableBuilder(
+            valueListenable: controller.revision,
+            builder: (context, revision, _) => Args(
+              key: ValueKey(revision),
+              scriptName: 'fixture',
+              taskName: 'MetaDemon',
+              stagingMode: true,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final dropdown = find.byType(DropdownButton<String>);
+    await tester.tap(dropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('月读').last);
+    await tester.pumpAndSettle();
+    controller.stageArgumentChange(
+      'tsukuyomi_preset',
+      'powerful_count',
+      '5',
+      'integer',
+    );
+    await tester.pump();
+    await tester.tap(
+      find.byWidgetPredicate((widget) => widget is FilledButton),
+    );
+    await tester.pumpAndSettle();
+
+    expect(controller.revision.value, 1);
+    expect(
+      tester.widget<DropdownButton<String>>(dropdown).value,
+      'quick_presets-tsukuyomi_preset',
+    );
+    expect(find.text('5'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
   });
 }
