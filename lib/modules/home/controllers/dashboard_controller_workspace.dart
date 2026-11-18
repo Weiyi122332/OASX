@@ -196,7 +196,7 @@ extension HomeDashboardWorkspaceX on HomeDashboardController {
   }
 
   void setSearchQuery(String value) {
-    searchQuery.value = value.trim().toLowerCase();
+    searchQuery.value = value;
     _ensureActiveScript(visibleScripts);
   }
 
@@ -497,7 +497,7 @@ extension HomeDashboardWorkspaceX on HomeDashboardController {
   }
 
   bool _matchesVisibleFilter(ScriptModel model) {
-    final query = searchQuery.value.trim();
+    final query = searchQuery.value.trim().toLowerCase();
     final stateMatched =
         stateFilter.value == HomeScriptStateFilter.all ||
         scriptCollectionStateFor(model) == stateFilter.value;

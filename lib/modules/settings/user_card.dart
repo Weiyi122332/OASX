@@ -87,10 +87,12 @@ class _LoginInputFieldState extends State<_LoginInputField> {
           controller: _controller,
           focusNode: _focusNode,
           obscureText: widget.type == _LoginFieldType.password,
-          decoration:
-              widget.type == _LoginFieldType.address && PlatformUtils.isMobile
-              ? const InputDecoration(hintText: 'http://192.168.1.10:22288')
-              : null,
+          decoration: InputDecoration(
+            hintText:
+                widget.type == _LoginFieldType.address && PlatformUtils.isMobile
+                ? 'http://192.168.1.10:22288'
+                : null,
+          ),
           keyboardType: widget.type == _LoginFieldType.address
               ? TextInputType.url
               : TextInputType.text,

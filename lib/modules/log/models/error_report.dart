@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:oasx/modules/home/models/script_analysis_models.dart';
 import 'package:oasx/modules/log/log_browser_models.dart';
 import 'log_task_context.dart';
 
@@ -71,43 +70,6 @@ Future<ErrorTaskSettings> loadErrorTaskSettings(
     // Missing tasks, deleted configs and older backends leave this section empty.
     return const ErrorTaskSettings({});
   }
-}
-
-ScriptAnalysisSnapshot analyzeErrorLog(ScriptErrorLogDetail detail) {
-  final context = LogTaskContext();
-  var date = detail.time.length >= 10
-      ? detail.time.substring(0, 10)
-      : DateTime.fromMillisecondsSinceEpoch(
-          detail.timestampMs,
-        ).toIso8601String().substring(0, 10);
-  final lines = <ScriptLogLine>[];
-  for (final text in const LineSplitter().convert(detail.log.content)) {
-    context.consume(text);
-    date = RegExp(r'^(\d{4}-\d{2}-\d{2}) ').firstMatch(text)?.group(1) ?? date;
-    lines.add(
-      ScriptLogLine(
-        fileName: '${date}_error.txt',
-        lineNo: lines.length + 1,
-        offset: 0,
-        byteLength: text.length,
-        text: text,
-        lineTruncated: false,
-      ),
-    );
-  }
-  final dates = lines.map((line) => line.fileName.substring(0, 10)).toSet();
-  final events =
-      dates
-          .expand(
-            (day) => parseScriptAnalysis(
-              lines,
-              day,
-              fallbackTask: context.fallbackTask,
-            ).events,
-          )
-          .toList()
-        ..sort((a, b) => a.time.compareTo(b.time));
-  return ScriptAnalysisSnapshot(events);
 }
 
 /// Called only by the explicit export action. Images travel inside the .md file.

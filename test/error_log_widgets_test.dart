@@ -6,8 +6,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:oasx/modules/home/models/script_analysis_models.dart';
-import 'package:oasx/modules/home/widgets/action_path_card.dart';
 import 'package:oasx/modules/home/widgets/log_center_panel.dart';
 import 'package:oasx/modules/log/log_browser_models.dart';
 import 'package:oasx/modules/log/script_log_browser_controller.dart';
@@ -94,7 +92,6 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('错误截图'), findsOneWidget);
-      expect(find.byType(ActionPathCard), findsNothing);
       expect(tester.takeException(), isNull);
       if (preview.isNotEmpty) {
         final boundary =
@@ -267,35 +264,11 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('该错误没有保存截图。'), findsOneWidget);
-    expect(find.byType(ActionPathCard), findsNothing);
     expect(controller.exportingErrorReport.value, isFalse);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     vertical.dispose();
     horizontal.dispose();
     controller.onClose();
-  });
-  testWidgets('path switches work in a narrow panel', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 280,
-            child: ActionPathCard(
-              data: ScriptAnalysisSnapshot([]),
-              colorByTask: true,
-            ),
-          ),
-        ),
-      ),
-    );
-    expect(find.byType(FilterChip), findsNWidgets(3));
-    await tester.tap(find.byType(FilterChip).first);
-    await tester.pump();
-    expect(
-      tester.widget<FilterChip>(find.byType(FilterChip).first).selected,
-      isFalse,
-    );
-    expect(tester.takeException(), isNull);
   });
 }

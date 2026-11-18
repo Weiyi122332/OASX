@@ -55,6 +55,7 @@ class _PrimaryNavigationShellState extends State<PrimaryNavigationShell> {
         final content = _PrimaryNavigationContent(
           selectedIndex: selectedIndex,
           builtIndexes: _builtIndexes,
+          onOpenSettings: () => _handleDestinationSelected(1),
         );
         return Scaffold(
           appBar: buildPlatformAppBar(context, routePath: _routePath),
@@ -140,10 +141,12 @@ class _PrimaryNavigationContent extends StatelessWidget {
   const _PrimaryNavigationContent({
     required this.selectedIndex,
     required this.builtIndexes,
+    required this.onOpenSettings,
   });
 
   final int selectedIndex;
   final Set<int> builtIndexes;
+  final VoidCallback onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +154,7 @@ class _PrimaryNavigationContent extends StatelessWidget {
       index: selectedIndex,
       children: [
         builtIndexes.contains(0)
-            ? const HomeView(standalone: false)
+            ? HomeView(standalone: false, onOpenSettings: onOpenSettings)
             : const SizedBox.shrink(),
         builtIndexes.contains(1)
             ? const SettingsView(standalone: false)

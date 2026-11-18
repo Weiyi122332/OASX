@@ -6,7 +6,7 @@ import 'package:oasx/modules/home/models/home_workbench_layout.dart';
 import 'package:oasx/modules/home/widgets/config_state_indicator.dart';
 import 'package:oasx/modules/home/widgets/log_center_panel.dart';
 import 'package:oasx/modules/home/widgets/statistics_panel.dart';
-import 'package:oasx/modules/home/widgets/analysis_panel.dart';
+import 'package:oasx/modules/home/widgets/workbench_tabs.dart';
 import 'package:oasx/modules/home/widgets/resource_inventory_panel.dart';
 import 'package:oasx/modules/home/widgets/task_catalog_panel.dart';
 import 'package:oasx/modules/home/widgets/task_status_panel.dart';
@@ -71,75 +71,124 @@ class ActiveConfigPanel extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  if (onBackToScripts != null)
-                    IconButton(
-                      tooltip: I18n.scriptList.tr,
-                      onPressed: onBackToScripts,
-                      icon: const Icon(Icons.arrow_back_rounded),
-                    ),
-                  Expanded(
-                    child: Text(
-                      script.name,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                  ),
-                  _BulkQuickScheduleButton(
-                    icon: Icons.flash_on_rounded,
-                    tooltip: I18n.homeQuickRunAll.tr,
-                    loading: bulkMode == HomeBulkQuickScheduleMode.runNow,
-                    onPressed: isBulkIdle && hasBulkTasks
-                        ? onBulkQuickRun
-                        : null,
-                  ),
-                  _BulkQuickScheduleButton(
-                    icon: Icons.schedule_rounded,
-                    tooltip: I18n.homeQuickWaitAll.tr,
-                    loading: bulkMode == HomeBulkQuickScheduleMode.waitNow,
-                    onPressed: isBulkIdle && hasBulkTasks
-                        ? onBulkQuickWait
-                        : null,
-                  ),
-                  const SizedBox(width: 8),
-                  ConfigStateIndicator(
-                    state: controller.scriptStateFor(script),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    tooltip: isRunning ? I18n.stop.tr : I18n.run.tr,
-                    onPressed: () => onTogglePower(script.name, !isRunning),
-                    icon: const Icon(Icons.power_settings_new_rounded),
-                  ),
-                  if (onExpandRightSidebar != null) const SizedBox(width: 8),
-                  if (onExpandRightSidebar != null)
-                    IconButton.filledTonal(
-                      key: const ValueKey<String>(
-                        'home-workbench-expand-right-sidebar',
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final wide = constraints.maxWidth >= 480;
+                  final powerLabel = isRunning ? I18n.stop.tr : I18n.run.tr;
+                  final powerIcon = isRunning
+                      ? Icons.stop_rounded
+                      : Icons.play_arrow_rounded;
+                  Future<void> onPower() =>
+                      onTogglePower(script.name, !isRunning);
+                  return Row(
+                    children: [
+                      if (onBackToScripts != null)
+                        IconButton(
+                          tooltip: I18n.scriptList.tr,
+                          onPressed: onBackToScripts,
+                          icon: const Icon(Icons.arrow_back_rounded),
+                        ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Tooltip(
+                              message: script.name,
+                              child: Text(
+                                script.name,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            ConfigStateIndicator(
+                              state: controller.scriptStateFor(script),
+                            ),
+                          ],
+                        ),
                       ),
-                      tooltip: I18n.homeRestoreSidebar.tr,
-                      onPressed: onExpandRightSidebar,
-                      icon: const Icon(
-                        Icons.keyboard_double_arrow_left_rounded,
-                      ),
-                    ),
-                ],
+                      if (wide) ...[
+                        _BulkQuickScheduleButton(
+                          icon: Icons.flash_on_rounded,
+                          tooltip: I18n.homeQuickRunAll.tr,
+                          loading: bulkMode == HomeBulkQuickScheduleMode.runNow,
+                          onPressed: isBulkIdle && hasBulkTasks
+                              ? onBulkQuickRun
+                              : null,
+                        ),
+                        _BulkQuickScheduleButton(
+                          icon: Icons.schedule_rounded,
+                          tooltip: I18n.homeQuickWaitAll.tr,
+                          loading:
+                              bulkMode == HomeBulkQuickScheduleMode.waitNow,
+                          onPressed: isBulkIdle && hasBulkTasks
+                              ? onBulkQuickWait
+                              : null,
+                        ),
+                      ] else
+                        PopupMenuButton<HomeBulkQuickScheduleMode>(
+                          tooltip: I18n.homeMoreActions.tr,
+                          enabled: isBulkIdle && hasBulkTasks,
+                          icon: isBulkIdle
+                              ? const Icon(Icons.more_horiz_rounded)
+                              : const SizedBox.square(
+                                  dimension: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                          itemBuilder: (_) => [
+                            PopupMenuItem(
+                              value: HomeBulkQuickScheduleMode.runNow,
+                              child: Text(I18n.homeQuickRunAll.tr),
+                            ),
+                            PopupMenuItem(
+                              value: HomeBulkQuickScheduleMode.waitNow,
+                              child: Text(I18n.homeQuickWaitAll.tr),
+                            ),
+                          ],
+                          onSelected: (mode) =>
+                              mode == HomeBulkQuickScheduleMode.runNow
+                              ? onBulkQuickRun()
+                              : onBulkQuickWait(),
+                        ),
+                      if (onExpandRightSidebar != null)
+                        IconButton(
+                          key: const ValueKey<String>(
+                            'home-workbench-expand-right-sidebar',
+                          ),
+                          tooltip: I18n.homeRestoreSidebar.tr,
+                          onPressed: onExpandRightSidebar,
+                          icon: const Icon(
+                            Icons.keyboard_double_arrow_left_rounded,
+                          ),
+                        ),
+                      const SizedBox(width: 4),
+                      if (constraints.maxWidth <
+                          MediaQuery.textScalerOf(context).scale(260))
+                        IconButton.filledTonal(
+                          tooltip: powerLabel,
+                          onPressed: onPower,
+                          icon: Icon(powerIcon),
+                        )
+                      else
+                        FilledButton.tonalIcon(
+                          onPressed: onPower,
+                          icon: Icon(powerIcon, size: 18),
+                          label: Text(powerLabel),
+                        ),
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: tabs
-                    .map(
-                      (tab) => ChoiceChip(
-                        label: Text(_tabLabel(tab)),
-                        showCheckmark: false,
-                        selected: currentTab == tab,
-                        onSelected: (_) => onChangeTab(tab),
-                      ),
-                    )
-                    .toList(),
+              WorkbenchTabs(
+                tabs: tabs,
+                selected: currentTab,
+                onSelected: onChangeTab,
               ),
               const SizedBox(height: 12),
               Expanded(child: _buildTabContent(script, currentTab)),
@@ -173,21 +222,9 @@ class ActiveConfigPanel extends StatelessWidget {
       ),
       HomeWorkbenchTab.stats => const ScriptStatisticsPanel(),
       HomeWorkbenchTab.logs => LogCenterPanel(scriptName: script.name),
-      HomeWorkbenchTab.analysis => ScriptAnalysisPanel(scriptName: script.name),
       HomeWorkbenchTab.resources => ResourceInventoryPanel(
         scriptName: script.name,
       ),
-    };
-  }
-
-  String _tabLabel(HomeWorkbenchTab value) {
-    return switch (value) {
-      HomeWorkbenchTab.status => I18n.overview.tr,
-      HomeWorkbenchTab.tasks => I18n.homeTasksTab.tr,
-      HomeWorkbenchTab.stats => I18n.homeStatsTab.tr,
-      HomeWorkbenchTab.logs => I18n.log.tr,
-      HomeWorkbenchTab.analysis => I18n.homeAnalysisTab.tr,
-      HomeWorkbenchTab.resources => I18n.homeResourcesTab.tr,
     };
   }
 }

@@ -84,11 +84,13 @@ class ApiClient {
     final cacheStore = kIsWeb
         ? MemCacheStore()
         : FileCacheStore(temporaryDirectory);
-    _cacheOptions = CacheOptions(
-      store: cacheStore,
+    // Per-request options travel with responses to the decoding isolate.
+    // Only the interceptor owns the file store and its asynchronous locks.
+    _cacheOptions = const CacheOptions(
+      store: null,
       policy: CachePolicy.request,
       hitCacheOnErrorExcept: [401, 403],
-      maxStale: const Duration(days: 7),
+      maxStale: Duration(days: 7),
       priority: CachePriority.normal,
       cipher: null,
       keyBuilder: CacheOptions.defaultCacheKeyBuilder,
@@ -97,7 +99,9 @@ class ApiClient {
     NetOptions.instance
         .setConnectTimeout(const Duration(seconds: 3))
         .enableLogger(false)
-        .addInterceptor(DioCacheInterceptor(options: _cacheOptions))
+        .addInterceptor(
+          DioCacheInterceptor(options: _cacheOptions.copyWith(store: cacheStore)),
+        )
         .addInterceptor(ApiInterceptor())
         .create();
     setAddress(_defaultAddress);

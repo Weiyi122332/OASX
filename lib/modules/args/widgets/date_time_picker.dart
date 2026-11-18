@@ -2,26 +2,25 @@
 
 part of args;
 
-final dateDaysInWeek =
-    List.generate(7, (index) => index < 10 ? '0$index' : '$index').toList();
-final dateHours =
-    List.generate(24, (index) => index < 10 ? '0$index' : '$index').toList();
-final dateMinutes =
-    List.generate(60, (index) => index < 10 ? '0$index' : '$index').toList();
-final dateSeconds =
-    List.generate(60, (index) => index < 10 ? '0$index' : '$index').toList();
+final dateDaysInWeek = List.generate(
+  7,
+  (index) => index < 10 ? '0$index' : '$index',
+).toList();
+final dateHours = List.generate(
+  24,
+  (index) => index < 10 ? '0$index' : '$index',
+).toList();
+final dateMinutes = List.generate(
+  60,
+  (index) => index < 10 ? '0$index' : '$index',
+).toList();
+final dateSeconds = List.generate(
+  60,
+  (index) => index < 10 ? '0$index' : '$index',
+).toList();
 
-final dateTimeDelta = [
-  dateDaysInWeek,
-  dateHours,
-  dateMinutes,
-  dateSeconds,
-];
-final dateTime = [
-  dateHours,
-  dateMinutes,
-  dateSeconds,
-];
+final dateTimeDelta = [dateDaysInWeek, dateHours, dateMinutes, dateSeconds];
+final dateTime = [dateHours, dateMinutes, dateSeconds];
 
 String ensureTimeDeltaString(dynamic value) {
   if (value is String) {
@@ -50,9 +49,17 @@ class DateTimePickerBase extends StatefulWidget {
     required this.onChange,
     this.hoverStyle,
     this.notHoverStyle,
+    this.fieldIcon,
+    this.enabled = true,
+    this.semanticLabel,
+    this.errorText,
   });
 
   String value = '';
+  final IconData? fieldIcon;
+  final bool enabled;
+  final String? semanticLabel;
+  final String? errorText;
   final TextStyle? hoverStyle;
   final TextStyle? notHoverStyle;
   void Function(String value) onChange = (value) {};
@@ -66,7 +73,19 @@ class DateTimePickerBaseState extends State<DateTimePickerBase> {
 
   @override
   Widget build(BuildContext context) {
-    final hoverStyle = widget.hoverStyle ??
+    if (widget.fieldIcon != null) {
+      return WorkbenchPickerField(
+        text: widget.value,
+        semanticLabel: widget.semanticLabel,
+        errorText: widget.errorText,
+        trailingIcon: widget.fieldIcon!,
+        onPressed: widget.enabled
+            ? () => showPicker(context, widget.value)
+            : null,
+      );
+    }
+    final hoverStyle =
+        widget.hoverStyle ??
         TextStyle(color: Theme.of(context).primaryColor, fontSize: 16);
     final notHoverStyle = widget.notHoverStyle ?? const TextStyle(fontSize: 16);
     final baseHeight = (hoverStyle.fontSize ?? 16) * 1.2;
@@ -86,6 +105,33 @@ class DateTimePickerBaseState extends State<DateTimePickerBase> {
     );
   }
 
+  PickerStyle pickerStyle(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    Widget action(String label, Color color) => Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color),
+      ),
+    );
+    return PickerStyle(
+      backgroundColor: colors.surface,
+      textColor: colors.onSurface,
+      headDecoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+      ),
+      cancelButton: action(I18n.cancel.tr, colors.onSurfaceVariant),
+      commitButton: action(I18n.confirm.tr, colors.primary),
+      itemOverlay: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.primary.withValues(alpha: 0.09),
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+  }
+
   void showPicker(context, dynamic value) {
     final now = DateTime.now();
     final minDate = DateTime(now.year - 1, 1, 1);
@@ -93,9 +139,7 @@ class DateTimePickerBaseState extends State<DateTimePickerBase> {
     Pickers.showDatePicker(
       context,
       mode: DateMode.YMDHMS,
-      pickerStyle: Theme.of(context).brightness == Brightness.light
-          ? DefaultPickerStyle()
-          : DefaultPickerStyle.dark(),
+      pickerStyle: pickerStyle(context),
       suffix: Suffix(
         years: I18n.year.tr,
         month: I18n.month.tr,
@@ -120,8 +164,8 @@ class DateTimePickerBaseState extends State<DateTimePickerBase> {
     final normalized = parsed.isBefore(minDate)
         ? minDate
         : parsed.isAfter(maxDate)
-            ? maxDate
-            : parsed;
+        ? maxDate
+        : parsed;
     return PDuration.parse(normalized);
   }
 
@@ -159,6 +203,10 @@ class DateTimePicker extends DateTimePickerBase {
     required super.onChange,
     super.hoverStyle,
     super.notHoverStyle,
+    super.fieldIcon,
+    super.enabled,
+    super.semanticLabel,
+    super.errorText,
   });
 
   @override

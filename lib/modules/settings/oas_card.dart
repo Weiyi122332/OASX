@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:oasx/modules/common/widgets/workbench_dialog.dart';
 import 'package:oasx/modules/home/tool_view.dart';
 import 'package:oasx/modules/settings/controllers/settings_controller.dart';
 import 'package:oasx/modules/settings/oas_card_extra.dart';
@@ -15,7 +16,7 @@ class OasSettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SettingCard(
-      title: 'OAS${I18n.setting.tr}',
+      title: 'OAS ${I18n.setting.tr}',
       items: [
         SettingItem(
           left: Text(I18n.notifyTest.tr),
@@ -58,9 +59,8 @@ class OasSettingsCard extends StatelessWidget {
 }
 
 void notifyTest() {
-  Get.defaultDialog(
-    title: I18n.notifyTest.tr,
-    content: const NotifyTest(),
+  Get.dialog(
+    WorkbenchDialog(title: I18n.notifyTest.tr, content: const NotifyTest()),
   );
 }
 

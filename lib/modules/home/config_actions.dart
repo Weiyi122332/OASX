@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get/get.dart';
+import 'package:oasx/modules/common/widgets/workbench_dialog.dart';
 import 'package:oasx/api/api_client.dart';
 import 'package:oasx/api/config_transfer_models.dart';
 import 'package:oasx/service/script_service.dart';
@@ -52,41 +53,59 @@ class ConfigActions {
   }) async {
     var newName = oldName;
     final formKey = GlobalKey<FormState>();
-    final result = await Get.defaultDialog<String>(
-      title: I18n.rename.tr,
-      textConfirm: I18n.confirm.tr,
-      textCancel: I18n.cancel.tr,
-      content: Form(
-        key: formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: TextFormField(
-          decoration: InputDecoration(labelText: I18n.newName.tr),
-          validator: (String? value) {
-            final input = value?.trim() ?? '';
-            return validateRenameName(
-              oldName: oldName,
-              newName: input,
-              scriptService: scriptService,
-            );
-          },
-          onChanged: (v) => newName = v.trim(),
+    var submitting = false;
+    final result = await Get.dialog<String>(
+      StatefulBuilder(
+        builder: (context, setDialogState) => WorkbenchDialog(
+          title: I18n.rename.tr,
+          content: Form(
+            key: formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: TextFormField(
+              initialValue: oldName,
+              enabled: !submitting,
+              decoration: InputDecoration(labelText: I18n.newName.tr),
+              validator: (value) => validateRenameName(
+                oldName: oldName,
+                newName: value?.trim() ?? '',
+                scriptService: scriptService,
+              ),
+              onChanged: (value) => newName = value.trim(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: submitting ? null : () => Navigator.of(context).pop(),
+              child: Text(I18n.cancel.tr),
+            ),
+            FilledButton(
+              onPressed: submitting
+                  ? null
+                  : () async {
+                      if (!(formKey.currentState?.validate() ?? false)) return;
+                      setDialogState(() => submitting = true);
+                      try {
+                        final renamed = await renameScript(
+                          scriptService: scriptService,
+                          oldName: oldName,
+                          newName: newName,
+                        );
+                        if (renamed &&
+                            context.mounted &&
+                            ModalRoute.of(context)?.isCurrent == true) {
+                          Navigator.of(context).pop(newName);
+                        }
+                      } finally {
+                        if (context.mounted) {
+                          setDialogState(() => submitting = false);
+                        }
+                      }
+                    },
+              child: Text(I18n.confirm.tr),
+            ),
+          ],
         ),
       ),
-      onConfirm: () async {
-        if (!(formKey.currentState?.validate() ?? false)) {
-          return;
-        }
-        final renamed = await renameScript(
-          scriptService: scriptService,
-          oldName: oldName,
-          newName: newName,
-        );
-        if (!renamed) {
-          return;
-        }
-        Get.back(result: newName);
-      },
-      onCancel: () {},
     );
     return result;
   }
@@ -98,20 +117,31 @@ class ConfigActions {
     final canDelete = await scriptService.tryCloseScriptWithReason(name);
     if (!canDelete) return;
 
-    await Get.defaultDialog(
-      title: I18n.delete.tr,
-      textConfirm: I18n.confirm.tr,
-      textCancel: I18n.cancel.tr,
-      middleText: '${I18n.deleteConfirm.tr} "$name"?',
-      onConfirm: () async {
-        Get.back();
-        final success = await scriptService.deleteConfig(name);
-        if (!success) {
-          Get.snackbar(I18n.error.tr, '');
-        }
-      },
-      onCancel: () {},
+    final confirmed = await Get.dialog<bool>(
+      Builder(
+        builder: (context) => WorkbenchDialog(
+          title: I18n.delete.tr,
+          content: Text('${I18n.deleteConfirm.tr} "$name"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(I18n.cancel.tr),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError,
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(I18n.delete.tr),
+            ),
+          ],
+        ),
+      ),
     );
+    if (confirmed != true) return;
+    final success = await scriptService.deleteConfig(name);
+    if (!success) Get.snackbar(I18n.error.tr, '');
   }
 
   static Future<void> exportScript({required String name}) async {

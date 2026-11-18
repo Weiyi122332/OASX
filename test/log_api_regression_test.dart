@@ -10,6 +10,7 @@ import 'package:oasx/api/api_interceptor.dart';
 import 'package:oasx/api/log_api_response.dart';
 import 'package:oasx/modules/log/models/error_log_ownership.dart';
 import 'package:oasx/modules/log/log_browser_models.dart';
+import 'package:oasx/modules/log/script_log_browser_controller.dart';
 
 class _Adapter implements HttpClientAdapter {
   late ResponseBody Function(RequestOptions) respond;
@@ -96,6 +97,24 @@ void main() {
     dio.interceptors.add(_SilentInterceptor());
   });
   setUp(() => api.setAddress('http://oasx-log-test-${index++}.invalid'));
+
+  test(
+    'switching from info to error preserves latest refresh intent',
+    () async {
+      adapter.respond = (_) => jsonResponse(page([]));
+      final controller = ScriptLogBrowserController(scriptName: 'demo');
+      addTearDown(controller.onClose);
+      final loaded = controller.errorListLoading.stream.firstWhere(
+        (loading) => !loading,
+      );
+
+      controller.selectTab(ScriptLogBrowserTab.error);
+      await loaded.timeout(const Duration(seconds: 5));
+
+      expect(controller.errorMessage.value, isEmpty);
+      expect(controller.shouldRefreshLatestOnInfoResume, isTrue);
+    },
+  );
 
   for (final endpoint in ['window', 'errors', 'detail', 'image']) {
     test('$endpoint HTTP failure throws actual status and message', () async {

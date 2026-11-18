@@ -17,22 +17,12 @@ class LogCenterToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: _leadingControls(context)),
-        const SizedBox(width: 8),
-        _trailingControls(),
-      ],
-    );
-  }
-
-  /// Builds title and tab switch on the left.
-  Widget _leadingControls(BuildContext context) {
-    return Wrap(
+    return OverflowBar(
+      alignment: MainAxisAlignment.spaceBetween,
+      overflowAlignment: OverflowBarAlignment.start,
       spacing: 8,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [_tabSwitch()],
+      overflowSpacing: 4,
+      children: [_tabSwitch(), _trailingControls()],
     );
   }
 

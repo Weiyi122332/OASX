@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oasx/modules/common/widgets/workbench_select.dart';
 import 'package:oasx/api/api_client.dart';
 import 'package:oasx/modules/home/models/resource_inventory_models.dart';
 import 'package:oasx/translation/i18n_content.dart';
@@ -135,28 +136,18 @@ class _ResourceInventoryPanelState extends State<ResourceInventoryPanel> {
             ),
           ],
         ),
-        DropdownButtonFormField<String>(
-          key: ValueKey(
-            'resource-date-${widget.scriptName}-${_selectedDate ?? 'latest'}',
-          ),
-          initialValue: _selectedDate ?? 'latest',
-          isExpanded: true,
-          menuMaxHeight: 280,
-          decoration: const InputDecoration(
-            isDense: true,
-            border: OutlineInputBorder(),
-          ),
-          items: [
-            DropdownMenuItem(
-              value: 'latest',
-              child: Text(I18n.resourceLatest.tr),
-            ),
-            for (final date in {
-              ...dates,
-              if (_selectedDate != null) _selectedDate!,
-            })
-              DropdownMenuItem(value: date, child: Text(date)),
-          ],
+        WorkbenchSelect<String>(
+          key: ValueKey('resource-date-${widget.scriptName}'),
+          options: {
+            'latest',
+            ...dates,
+            if (_selectedDate != null) _selectedDate!,
+          },
+          value: _selectedDate ?? 'latest',
+          optionLabel: (date) =>
+              date == 'latest' ? I18n.resourceLatest.tr : date,
+          semanticLabel: I18n.homeStatsSelectedDate.tr,
+          leadingIcon: Icons.calendar_today_outlined,
           onChanged: _selectDate,
         ),
         const SizedBox(height: 12),
@@ -239,46 +230,47 @@ class _ResourceCard extends StatelessWidget {
         : I18n.resourceCompact.tr;
     return Tooltip(
       message: value?.error ?? '',
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(
-            alpha: 0.45,
-          ),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.colorScheme.outlineVariant),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Image.asset(
-                  'assets/images/resources/$resource.png',
-                  width: 32,
-                  height: 32,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+      child: Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Image.asset(
+                    'assets/images/resources/$resource.png',
+                    width: 32,
+                    height: 32,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                value?.formatted ?? '—',
-                style: theme.textTheme.headlineSmall,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(hint.isEmpty ? ' ' : hint, style: theme.textTheme.bodySmall),
-          ],
+              const SizedBox(height: 8),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value?.formatted ?? '—',
+                  style: theme.textTheme.headlineSmall,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                hint.isEmpty ? ' ' : hint,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

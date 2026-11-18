@@ -114,7 +114,6 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
         isDense: true,
         prefixIcon: const Icon(Icons.search_rounded),
         hintText: I18n.taskSearchHint.tr,
-        border: const OutlineInputBorder(),
       ),
       onChanged: (value) => setState(() {
         _searchQuery = value.trim().toLowerCase();

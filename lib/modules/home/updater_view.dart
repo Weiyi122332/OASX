@@ -16,14 +16,12 @@ class UpdaterView extends StatelessWidget {
       future: ApiClient().getUpdateInfo(),
       builder: (BuildContext context, AsyncSnapshot<UpdateInfoModel> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
+          return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else {
           UpdateInfoModel data = snapshot.data!;
-          return SingleChildScrollView(
-            child: content(data, context).paddingAll(20),
-          );
+          return content(data, context);
         }
       },
     );

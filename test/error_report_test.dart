@@ -49,10 +49,6 @@ void main() {
     expect(summary.task, 'WantedQuests');
     expect(summary.type, 'GameTooManyClickError');
     expect(buildErrorMarkdown(detail(text), []), contains('任务：WantedQuests'));
-    expect(analyzeErrorLog(detail(text)).events.map((event) => event.task), [
-      'Pets',
-      'WantedQuests',
-    ]);
   });
   test('saved child boundaries work without a scheduler or group heading', () {
     for (final boundary in [
@@ -237,10 +233,6 @@ void main() {
         '2026-10-16 00:00:01.000 | INFO | Click (20, 30) @ OK\n'
         'GameStuckError: stuck';
     expect(ErrorLogSummary.parse(text).task, 'RealmRaid');
-    expect(analyzeErrorLog(detail(text)).events.map((e) => e.task), [
-      'RealmRaid',
-      'RealmRaid',
-    ]);
     expect(buildErrorMarkdown(detail(text), []), contains('任务：RealmRaid'));
   });
   test('last level-zero task heading wins, including custom task names', () {
@@ -271,15 +263,6 @@ void main() {
       '未知任务',
     );
   });
-  test('traceback fallback also labels preceding clicks', () {
-    final snapshot = analyzeErrorLog(
-      detail(
-        '2026-10-16 00:00:00.000 | INFO | Click (10, 20) @ OK\n'
-        '  File "/oas/tasks/AreaBoss/script_task.py", line 20\nValueError: test',
-      ),
-    );
-    expect(snapshot.events.single.task, 'AreaBoss');
-  });
   test('last scheduled task and exception type win', () {
     final summary = ErrorLogSummary.parse(
       '[Task] First (Enable)\n'
@@ -300,19 +283,6 @@ void main() {
       truncated: true,
     );
     expect(summary.task, contains('无法确认最后任务'));
-  });
-  test('error path spans midnight and retains task identity', () {
-    final snapshot = analyzeErrorLog(
-      detail(
-        '2026-10-15 23:59:59.000 | INFO | Scheduler: Start task `First`\n'
-        '2026-10-15 23:59:59.001 | INFO | Click (10, 20) @ OK\n'
-        '2026-10-16 00:00:00.000 | INFO | Click (20, 30) @ OK\n'
-        '2026-10-16 00:00:00.001 | INFO | Scheduler: Start task `Second`\n'
-        '2026-10-16 00:00:00.002 | INFO | Click (30, 40) @ OK',
-      ),
-    );
-    expect(snapshot.clickCount, 3);
-    expect(snapshot.events.map((e) => e.task), ['First', 'First', 'Second']);
   });
   test('Markdown embeds bytes, preserves logs and marks truncation', () {
     final bytes = Uint8List.fromList([1, 2, 3, 4]);

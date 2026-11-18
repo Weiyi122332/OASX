@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:oasx/modules/common/widgets/workbench_dialog.dart';
 import 'package:oasx/api/api_client.dart';
 import 'package:oasx/api/config_transfer_models.dart';
 import 'package:oasx/modules/args/index.dart';
@@ -133,13 +134,21 @@ class _TaskJsonTransferActionsState extends State<TaskJsonTransferActions> {
   }
 
   Future<bool> _confirmDiscardDraft() async {
-    final result = await Get.defaultDialog<bool>(
-      title: I18n.taskJsonImport.tr,
-      middleText: I18n.taskJsonDiscardDraftPrompt.tr,
-      textConfirm: I18n.confirm.tr,
-      textCancel: I18n.cancel.tr,
-      onConfirm: () => Get.back(result: true),
-      onCancel: () {},
+    final result = await Get.dialog<bool>(
+      WorkbenchDialog(
+        title: I18n.taskJsonImport.tr,
+        content: Text(I18n.taskJsonDiscardDraftPrompt.tr),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: Text(I18n.cancel.tr),
+          ),
+          FilledButton(
+            onPressed: () => Get.back(result: true),
+            child: Text(I18n.confirm.tr),
+          ),
+        ],
+      ),
     );
     return result == true;
   }

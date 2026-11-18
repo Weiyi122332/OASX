@@ -58,13 +58,12 @@ enum HomeScriptStateFilter { all, running, abnormal, stopped, offline }
 enum HomeWorkbenchPage { scripts, workspace }
 
 /// Defines the visible home workbench tab for the active script.
-enum HomeWorkbenchTab { status, tasks, logs, stats, analysis, resources }
+enum HomeWorkbenchTab { status, tasks, logs, stats, resources }
 
 /// Returns whether the tab belongs to the right desktop sidebar.
 bool isHomeWorkbenchSidebarTab(HomeWorkbenchTab value) {
   return value == HomeWorkbenchTab.stats ||
       value == HomeWorkbenchTab.logs ||
-      value == HomeWorkbenchTab.analysis ||
       value == HomeWorkbenchTab.resources;
 }
 
@@ -90,7 +89,6 @@ List<HomeWorkbenchTab> resolveHomeWorkbenchTabs(HomeWorkbenchLayoutMode mode) {
     HomeWorkbenchTab.tasks,
     HomeWorkbenchTab.logs,
     HomeWorkbenchTab.stats,
-    HomeWorkbenchTab.analysis,
     HomeWorkbenchTab.resources,
   ];
 }
@@ -105,7 +103,6 @@ List<HomeWorkbenchTab> resolveHomeWorkbenchSidebarTabs(
   return const [
     HomeWorkbenchTab.logs,
     HomeWorkbenchTab.stats,
-    HomeWorkbenchTab.analysis,
     HomeWorkbenchTab.resources,
   ];
 }

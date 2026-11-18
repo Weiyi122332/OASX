@@ -97,10 +97,6 @@ class _RunCard extends StatelessWidget {
     final hasBattle = run.battleCount > 0;
     return Card(
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: scheme.outlineVariant),
-      ),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Row(

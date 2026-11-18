@@ -24,12 +24,4 @@ void main() {
 
     expect(controller.shouldRefreshLatestOnInfoResume, isFalse);
   });
-
-  test('switching from info to error preserves latest refresh intent', () {
-    final controller = ScriptLogBrowserController(scriptName: 'demo');
-
-    controller.selectTab(ScriptLogBrowserTab.error);
-
-    expect(controller.shouldRefreshLatestOnInfoResume, isTrue);
-  });
 }

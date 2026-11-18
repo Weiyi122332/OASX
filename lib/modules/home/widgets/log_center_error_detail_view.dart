@@ -271,13 +271,12 @@ class _ErrorDetailSection extends StatelessWidget {
   final Color borderColor;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: borderColor),
+  Widget build(BuildContext context) => Card(
+    margin: EdgeInsets.zero,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+      side: BorderSide(color: borderColor),
     ),
-    child: child,
+    child: Padding(padding: const EdgeInsets.all(14), child: child),
   );
 }

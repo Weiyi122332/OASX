@@ -2,7 +2,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:styled_widget/styled_widget.dart';
 
 import 'package:oasx/modules/server/controllers/server_controller.dart';
 import 'package:oasx/modules/server/widgets/deploy_import_dialog.dart';
@@ -36,43 +35,48 @@ class _DeploySectionPanelState extends State<DeploySectionPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return GetX<ServerController>(builder: (controller) {
-      final authenticated = controller.rootPathAuthenticated.value;
-      return Card(
-        margin: const EdgeInsets.fromLTRB(0, 0, 0, 10),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _DeploySectionHeader(
-              authenticated: authenticated,
-              collapsed: _collapsed,
-              canSave: authenticated && _editorController.canSave,
-              canExport: authenticated && !_editorController.hasUnsavedChanges,
-              onToggle: _toggleCollapsed,
-              onImport: _showImportDialog,
-              onExport: _exportDeployFile,
-              onCopy: _editorController.copy,
-              onSave: _editorController.save,
-            ),
-            if (authenticated && !_collapsed) ...[
-              const Divider(height: 1),
-              _buildDeployYamlEditor(widget.maxHeight - 50),
+    return GetX<ServerController>(
+      builder: (controller) {
+        final authenticated = controller.rootPathAuthenticated.value;
+        return Card(
+          margin: const EdgeInsets.fromLTRB(0, 0, 0, 10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _DeploySectionHeader(
+                authenticated: authenticated,
+                collapsed: _collapsed,
+                canSave: authenticated && _editorController.canSave,
+                canExport:
+                    authenticated && !_editorController.hasUnsavedChanges,
+                onToggle: _toggleCollapsed,
+                onImport: _showImportDialog,
+                onExport: _exportDeployFile,
+                onCopy: _editorController.copy,
+                onSave: _editorController.save,
+              ),
+              if (authenticated && !_collapsed) ...[
+                const Divider(height: 1),
+                _buildDeployYamlEditor(widget.maxHeight - 50),
+              ],
             ],
-          ],
-        ),
-      );
-    });
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildDeployYamlEditor(double maxHeight) {
-    return GetX<ServerController>(builder: (controller) {
-      return DeployYamlEditor(
-        content: controller.deployContent.value,
-        maxHeight: maxHeight,
-        onSave: controller.writeDeploy,
-        controller: _editorController,
-      );
-    });
+    return GetX<ServerController>(
+      builder: (controller) {
+        return DeployYamlEditor(
+          content: controller.deployContent.value,
+          maxHeight: maxHeight,
+          onSave: controller.writeDeploy,
+          controller: _editorController,
+        );
+      },
+    );
   }
 
   void _toggleCollapsed() {
@@ -151,49 +155,91 @@ class _DeploySectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return InkWell(
+    final heading = InkWell(
+      borderRadius: BorderRadius.circular(12),
       onTap: authenticated ? onToggle : null,
-      child: Row(
-        children: [
-          if (!authenticated)
-            const Icon(Icons.error, color: Colors.red).paddingOnly(right: 6),
-          Text(
-            I18n.setupDeploy.tr,
-            textAlign: TextAlign.left,
-            style: Theme.of(context).textTheme.titleMedium,
-          ).expanded(),
-          if (!authenticated)
-            Text(
-              I18n.rootPathIncorrect.tr,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colorScheme.error,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Row(
+          children: [
+            Icon(
+              authenticated ? Icons.tune_rounded : Icons.error_outline_rounded,
+              color: authenticated ? colorScheme.primary : colorScheme.error,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    I18n.setupDeploy.tr,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-            ).paddingOnly(right: 8),
-          IconButton(
-            tooltip: I18n.importDeployFile.tr,
-            icon: const Icon(Icons.file_download_outlined, size: 18),
-            onPressed: authenticated ? onImport : null,
-          ),
-          IconButton(
-            tooltip: I18n.exportDeployFile.tr,
-            icon: const Icon(Icons.file_upload_outlined, size: 18),
-            onPressed: canExport ? onExport : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.content_copy_rounded, size: 18),
-            onPressed: canSave ? onCopy : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.save_rounded, size: 18),
-            onPressed: canSave ? onSave : null,
-          ),
-          Icon(
-            collapsed || !authenticated ? Icons.expand_more : Icons.expand_less,
-            size: 20,
-            color: authenticated ? null : Theme.of(context).disabledColor,
-          ),
-        ],
-      ).paddingAll(8).constrained(height: 48),
+                  if (!authenticated)
+                    Text(
+                      I18n.rootPathIncorrect.tr,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: colorScheme.error),
+                    ),
+                ],
+              ),
+            ),
+            Icon(
+              collapsed || !authenticated
+                  ? Icons.expand_more_rounded
+                  : Icons.expand_less_rounded,
+              color: authenticated ? null : Theme.of(context).disabledColor,
+            ),
+          ],
+        ),
+      ),
+    );
+    final actions = Wrap(
+      children: [
+        IconButton(
+          tooltip: I18n.importDeployFile.tr,
+          icon: const Icon(Icons.file_download_outlined),
+          onPressed: authenticated ? onImport : null,
+        ),
+        IconButton(
+          tooltip: I18n.exportDeployFile.tr,
+          icon: const Icon(Icons.file_upload_outlined),
+          onPressed: canExport ? onExport : null,
+        ),
+        IconButton(
+          tooltip: I18n.copy.tr,
+          icon: const Icon(Icons.content_copy_rounded),
+          onPressed: canSave ? onCopy : null,
+        ),
+        IconButton(
+          tooltip: I18n.argsSaveChanges.tr,
+          icon: const Icon(Icons.save_rounded),
+          onPressed: canSave ? onSave : null,
+        ),
+      ],
+    );
+    return Padding(
+      padding: const EdgeInsets.all(6),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth <
+              MediaQuery.textScalerOf(context).scale(440)) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [heading, actions],
+            );
+          }
+          return Row(
+            children: [
+              Expanded(child: heading),
+              const SizedBox(width: 8),
+              actions,
+            ],
+          );
+        },
+      ),
     );
   }
 }

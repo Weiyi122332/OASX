@@ -61,6 +61,7 @@ class _TaskParameterPanelState extends State<TaskParameterPanel> {
           Row(
             children: [
               IconButton(
+                tooltip: I18n.back.tr,
                 onPressed: () async {
                   await widget.onBack();
                 },

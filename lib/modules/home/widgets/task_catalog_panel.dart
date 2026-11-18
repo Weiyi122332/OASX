@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oasx/modules/common/widgets/workbench_select.dart';
 import 'package:oasx/api/api_client.dart';
 import 'package:oasx/modules/args/index.dart';
 import 'package:oasx/modules/common/models/config_drag_payload.dart';
@@ -164,38 +165,35 @@ class _TaskCatalogPanelState extends State<TaskCatalogPanel> {
         isDense: true,
         prefixIcon: const Icon(Icons.search_rounded),
         hintText: I18n.taskSearchHint.tr,
-        border: const OutlineInputBorder(),
       ),
       onChanged: (value) => setState(() {
         _searchQuery = value.trim().toLowerCase();
       }),
     );
-    return Row(
-      children: [
-        Expanded(child: searchField),
-        const SizedBox(width: 10),
-        PopupMenuButton<HomeTaskCatalogFilter>(
-          tooltip: _filterLabel(_filter),
-          initialValue: _filter,
-          onSelected: (value) => setState(() {
-            _filter = value;
-          }),
-          itemBuilder: (context) => HomeTaskCatalogFilter.values
-              .map(
-                (value) => PopupMenuItem<HomeTaskCatalogFilter>(
-                  value: value,
-                  child: Text(_filterLabel(value)),
-                ),
-              )
-              .toList(),
-          icon: Icon(
-            Icons.filter_list_rounded,
-            color: _filter == HomeTaskCatalogFilter.all
-                ? null
-                : Theme.of(context).colorScheme.primary,
-          ),
-        ),
-      ],
+    final filter = WorkbenchSelect<HomeTaskCatalogFilter>(
+      options: HomeTaskCatalogFilter.values,
+      value: _filter,
+      optionLabel: _filterLabel,
+      leadingIcon: Icons.filter_list_rounded,
+      onChanged: (value) => setState(() => _filter = value),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scale = MediaQuery.textScalerOf(context);
+        if (constraints.maxWidth < scale.scale(350)) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [searchField, const SizedBox(height: 8), filter],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: searchField),
+            const SizedBox(width: 8),
+            SizedBox(width: scale.scale(152), child: filter),
+          ],
+        );
+      },
     );
   }
 

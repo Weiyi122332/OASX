@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:oasx/service/illustration_service.dart';
+import 'package:oasx/translation/i18n_content.dart';
 
 class IllustrationSettingsCard extends StatefulWidget {
   const IllustrationSettingsCard({super.key, this.service});
@@ -32,8 +33,6 @@ class _IllustrationSettingsCardState extends State<IllustrationSettingsCard> {
 
   @override
   Widget build(BuildContext context) => Card(
-    elevation: 2,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     child: Padding(
       padding: const EdgeInsets.all(16),
       child: Obx(
@@ -41,7 +40,7 @@ class _IllustrationSettingsCardState extends State<IllustrationSettingsCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '插画设置',
+              I18n.illustrationSettings.tr,
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),

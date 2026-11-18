@@ -4,7 +4,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:oasx/translation/i18n.dart';
 import 'package:oasx/modules/common/models/storage_key.dart';
 import 'package:oasx/modules/common/widgets/illustration_backdrop.dart';
 import 'package:oasx/modules/settings/illustration_card.dart';
@@ -224,7 +226,9 @@ void main() {
     (tester) async {
       final service = (await tester.runAsync(() => create()))!;
       await tester.pumpWidget(
-        MaterialApp(
+        GetMaterialApp(
+          translations: Messages(),
+          locale: const Locale('zh', 'CN'),
           home: Scaffold(
             body: SingleChildScrollView(
               child: IllustrationSettingsCard(service: service),

@@ -1,10 +1,9 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:styled_widget/styled_widget.dart';
 
+import 'package:oasx/modules/common/widgets/workbench_dialog.dart';
 import 'package:oasx/modules/home/updater_view.dart';
 import 'package:oasx/modules/settings/controllers/settings_controller.dart';
 import 'package:oasx/service/script_service.dart';
@@ -16,32 +15,25 @@ class AutoScriptButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      onPressed: () {
-        Get.defaultDialog(
+      tooltip: I18n.autoRunScriptList.tr,
+      onPressed: () => Get.dialog(
+        WorkbenchDialog(
           title: I18n.autoRunScriptList.tr,
-          content: const SingleChildScrollView(
-            child: AutoScriptDialogContent(),
-          ).constrained(maxHeight: 250).card(),
-        );
-      },
+          content: const AutoScriptDialogContent(),
+        ),
+      ),
       icon: const Icon(Icons.settings_rounded),
     );
   }
 }
 
 void updater() {
-  final screenWidth = Get.width;
-  final screenHeight = Get.height;
-  final proportionalWidth = screenWidth * 0.8;
-  final proportionalHeight = screenHeight * 0.7;
-  const contentIdealMaxWidth = 700.0;
-  final finalMaxWidth = min(contentIdealMaxWidth, proportionalWidth);
-  final finalMaxHeight = proportionalHeight;
-
-  Get.defaultDialog(
-    title: I18n.updater.tr,
-    content: const UpdaterView()
-        .constrained(maxWidth: finalMaxWidth, maxHeight: finalMaxHeight),
+  Get.dialog(
+    WorkbenchDialog(
+      title: I18n.updater.tr,
+      width: 700,
+      content: const UpdaterView(),
+    ),
   );
 }
 
@@ -71,13 +63,15 @@ void killServer() {
                 : () async {
                     isKilling.value = true;
                     var closedByTimeout = false;
-                    final autoCloseTimer =
-                        Timer(const Duration(seconds: 5), () {
-                      closedByTimeout = true;
-                      if (Get.isDialogOpen ?? false) {
-                        Get.back();
-                      }
-                    });
+                    final autoCloseTimer = Timer(
+                      const Duration(seconds: 5),
+                      () {
+                        closedByTimeout = true;
+                        if (Get.isDialogOpen ?? false) {
+                          Get.back();
+                        }
+                      },
+                    );
                     try {
                       final success = await settingsController.killServer();
                       if (success) {
@@ -115,23 +109,21 @@ class AutoScriptDialogContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final scriptService = Get.find<ScriptService>();
     final scriptList = scriptService.scriptModelMap.keys.toList()..sort();
-    return scriptList
-        .map((item) {
-          return Obx(() {
-            return <Widget>[
-              Expanded(
-                child: Text(item, maxLines: 1, overflow: TextOverflow.ellipsis),
-              ),
-              Checkbox(
-                value: scriptService.autoScriptList.contains(item),
-                onChanged: (nv) => scriptService.updateAutoScript(item, nv),
-              ),
-            ]
-                .toRow(mainAxisAlignment: MainAxisAlignment.spaceBetween)
-                .paddingSymmetric(vertical: 4, horizontal: 8);
-          });
-        })
-        .toList()
-        .toColumn(mainAxisSize: MainAxisSize.min);
+    if (scriptList.isEmpty) return Text(I18n.empty.tr);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final name in scriptList)
+          Obx(
+            () => CheckboxListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+              title: Text(name),
+              value: scriptService.autoScriptList.contains(name),
+              onChanged: (selected) =>
+                  scriptService.updateAutoScript(name, selected),
+            ),
+          ),
+      ],
+    );
   }
 }

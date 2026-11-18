@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:styled_widget/styled_widget.dart';
 
 import 'package:oasx/api/api_client.dart';
 import 'package:oasx/translation/i18n_content.dart';
@@ -19,79 +18,76 @@ class NotifyTestState extends State<NotifyTest> {
 
   @override
   Widget build(BuildContext context) {
-    return <Widget>[
-      Text(I18n.notifyTest.tr,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.titleMedium),
-      _config(),
-      _title(),
-      _content(),
-      const SizedBox(
-        height: 20,
-      ),
-      _send(),
-    ]
-        .toColumn(crossAxisAlignment: CrossAxisAlignment.start)
-        .padding(all: 10)
-        .card(margin: const EdgeInsets.all(10))
-        .constrained(maxWidth: 300, width: 300);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _config(),
+        const SizedBox(height: 14),
+        _title(),
+        const SizedBox(height: 14),
+        _content(),
+        const SizedBox(height: 16),
+        _send(),
+      ],
+    );
   }
 
   Widget _config() {
     return TextFormField(
-        keyboardType: TextInputType.multiline,
-        textInputAction: TextInputAction.newline,
-        maxLines: null,
-        initialValue: testConfig,
-        decoration: InputDecoration(
-            labelText: I18n.notifyTestConfig.tr,
-            helperText: I18n.notifyTestHelp.tr),
-        onChanged: (value) {
-          setState(() {
-            testConfig = value;
-          });
-        }).constrained(width: 300);
+      keyboardType: TextInputType.multiline,
+      textInputAction: TextInputAction.newline,
+      maxLines: null,
+      initialValue: testConfig,
+      decoration: InputDecoration(
+        labelText: I18n.notifyTestConfig.tr,
+        helperMaxLines: 4,
+        helperText: I18n.notifyTestHelp.tr,
+      ),
+      onChanged: (value) {
+        setState(() {
+          testConfig = value;
+        });
+      },
+    );
   }
 
   Widget _title() {
     return TextFormField(
-        keyboardType: TextInputType.multiline,
-        textInputAction: TextInputAction.newline,
-        maxLines: null,
-        initialValue: testTitle,
-        decoration: InputDecoration(
-          labelText: I18n.notifyTestTitle.tr,
-        ),
-        onChanged: (value) {
-          setState(() {
-            testTitle = value;
-          });
-        }).constrained(width: 300);
+      keyboardType: TextInputType.multiline,
+      textInputAction: TextInputAction.newline,
+      maxLines: null,
+      initialValue: testTitle,
+      decoration: InputDecoration(labelText: I18n.notifyTestTitle.tr),
+      onChanged: (value) {
+        setState(() {
+          testTitle = value;
+        });
+      },
+    );
   }
 
   Widget _content() {
     return TextFormField(
-        keyboardType: TextInputType.multiline,
-        textInputAction: TextInputAction.newline,
-        maxLines: null,
-        initialValue: testContent,
-        decoration: InputDecoration(
-          labelText: I18n.notifyTestContent.tr,
-        ),
-        onChanged: (value) {
-          setState(() {
-            testContent = value;
-          });
-        }).constrained(width: 300);
+      keyboardType: TextInputType.multiline,
+      textInputAction: TextInputAction.newline,
+      maxLines: null,
+      initialValue: testContent,
+      decoration: InputDecoration(labelText: I18n.notifyTestContent.tr),
+      onChanged: (value) {
+        setState(() {
+          testContent = value;
+        });
+      },
+    );
   }
 
   Widget _send() {
-    return MaterialButton(
-      color: Theme.of(context).canvasColor,
+    return FilledButton(
       onPressed: () {
         ApiClient().notifyTest(testConfig, testTitle, testContent);
       },
       child: Text(I18n.notifyTestSend.tr),
-    ).constrained(width: 300);
+    );
   }
 }

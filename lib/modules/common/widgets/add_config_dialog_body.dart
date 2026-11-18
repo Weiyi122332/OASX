@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oasx/modules/common/widgets/workbench_select.dart';
 import 'package:oasx/api/api_client.dart';
 import 'package:oasx/api/config_transfer_models.dart';
 import 'package:oasx/modules/common/widgets/config_json_drop_area.dart';
@@ -76,14 +77,15 @@ class _AddConfigDialogBodyState extends State<AddConfigDialogBody> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(I18n.newName.tr),
         TextFormField(
+          decoration: InputDecoration(labelText: I18n.newName.tr),
           initialValue: _newName,
           enabled: !_isSubmitting,
           onChanged: (value) => _newName = value,
         ),
         const SizedBox(height: 12),
         Text(I18n.configCopyFromExist.tr),
+        const SizedBox(height: 6),
         _templateDropdown(),
         const SizedBox(height: 12),
         Text(I18n.configImportJson.tr),
@@ -98,15 +100,12 @@ class _AddConfigDialogBodyState extends State<AddConfigDialogBody> {
   }
 
   Widget _templateDropdown() {
-    return DropdownButton<String>(
+    return WorkbenchSelect<String>(
       value: _selectedTemplate,
-      menuMaxHeight: 300,
-      isExpanded: true,
-      items: widget.configAll
-          .map<DropdownMenuItem<String>>(
-            (e) => DropdownMenuItem(value: e, child: Text(e)),
-          )
-          .toList(),
+      options: widget.configAll,
+      optionLabel: (name) => name,
+      semanticLabel: I18n.configCopyFromExist.tr,
+      leadingIcon: Icons.copy_all_outlined,
       onChanged: _isSubmitting ? null : _setTemplate,
     );
   }

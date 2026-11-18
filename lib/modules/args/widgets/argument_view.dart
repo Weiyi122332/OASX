@@ -26,7 +26,6 @@ class ArgumentView extends StatefulWidget {
 
 class _ArgumentViewState extends State<ArgumentView> {
   Timer? timer;
-  bool landscape = true;
   late final TextEditingController _textController;
   late final FocusNode _focusNode;
 
@@ -67,24 +66,31 @@ class _ArgumentViewState extends State<ArgumentView> {
       if (!_argsController._isArgumentVisible(widget.getGroupName(), model)) {
         return const SizedBox.shrink();
       }
-      landscape = MediaQuery.of(context).orientation == Orientation.landscape;
       _syncTextController();
       final title = _title();
       final form = _buildFormSection();
-      if (landscape) {
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: title),
-            const SizedBox(width: 12),
-            Expanded(child: form),
-          ],
-        ).padding(bottom: 8);
-      }
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [title, form],
-      ).padding(bottom: 8);
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth >=
+                MediaQuery.textScalerOf(context).scale(440)) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 4, child: title),
+                  const SizedBox(width: 16),
+                  Expanded(flex: 5, child: form),
+                ],
+              );
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [title, const SizedBox(height: 6), form],
+            );
+          },
+        ),
+      );
     });
   }
 
@@ -94,12 +100,14 @@ class _ArgumentViewState extends State<ArgumentView> {
       children: [
         SelectableText(
           widget.displayTitle ?? model.displayTitle,
-          style: Theme.of(context).textTheme.bodyMedium,
+          style: Theme.of(context).textTheme.titleSmall,
         ),
         if (model.displayDescription.isNotEmpty)
           SelectableText(
             model.displayDescription,
-            style: Theme.of(context).textTheme.bodySmall,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ).padding(top: 4),
       ],
     );
@@ -136,37 +144,13 @@ class _ArgumentViewState extends State<ArgumentView> {
         onChanged: _scheduleIntegerChange,
         enabled: !isLocked,
       ),
-      'enum' => DropdownButtonFormField<String>(
-        initialValue: model.value.toString(),
-        isExpanded: true,
-        menuMaxHeight: Get.height * 0.5,
-        decoration: InputDecoration(errorText: errorText),
-        items: model.enumEnum!
-            .map<DropdownMenuItem<String>>(
-              (e) => DropdownMenuItem(
-                value: e.toString(),
-                child: Text(
-                  model.displayOption(e),
-                  style: Theme.of(context).textTheme.bodyLarge,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            )
-            .toList(),
-        selectedItemBuilder: (context) => model.enumEnum!
-            .map<Widget>(
-              (e) => Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  model.displayOption(e),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ),
-            )
-            .toList(),
+      'enum' => WorkbenchSelect<String>(
+        value: model.value.toString(),
+        options: model.enumEnum ?? const <String>[],
+        optionLabel: model.displayOption,
+        semanticLabel: widget.displayTitle ?? model.displayTitle,
+        hintText: I18n.argsChooseOptions.tr,
+        errorText: errorText,
         onChanged: isLocked ? null : onEnumChanged,
       ),
       'multi_enum' => MultiEnumDropdown(
@@ -176,6 +160,7 @@ class _ArgumentViewState extends State<ArgumentView> {
         enabled: !isLocked,
         maxSelections: model.maxItems,
         optionLabel: model.displayOption,
+        semanticLabel: widget.displayTitle ?? model.displayTitle,
         onChanged: onMultiEnumChanged,
       ),
       'task_list' => TaskListEditor(
@@ -186,23 +171,29 @@ class _ArgumentViewState extends State<ArgumentView> {
         enabled: !isLocked,
         onChanged: onTaskListChanged,
       ),
-      'date_time' => _buildPicker(
-        DateTimePicker(value: model.value, onChange: onDateTimeChanged),
-        errorText,
+      'date_time' => DateTimePicker(
+        value: model.value,
+        onChange: onDateTimeChanged,
+        fieldIcon: Icons.calendar_month_outlined,
         enabled: !isLocked,
+        errorText: errorText,
+        semanticLabel: widget.displayTitle ?? model.displayTitle,
       ),
-      'time_delta' => _buildPicker(
-        TimeDeltaPicker(
-          value: ensureTimeDeltaString(model.value),
-          onChange: onTimeDeltaChanged,
-        ),
-        errorText,
+      'time_delta' => TimeDeltaPicker(
+        value: ensureTimeDeltaString(model.value),
+        onChange: onTimeDeltaChanged,
+        fieldIcon: Icons.timer_outlined,
         enabled: !isLocked,
+        errorText: errorText,
+        semanticLabel: widget.displayTitle ?? model.displayTitle,
       ),
-      'time' => _buildPicker(
-        TimePicker(value: model.value, onChange: onTimeChanged),
-        errorText,
+      'time' => TimePicker(
+        value: model.value,
+        onChange: onTimeChanged,
+        fieldIcon: Icons.schedule_rounded,
         enabled: !isLocked,
+        errorText: errorText,
+        semanticLabel: widget.displayTitle ?? model.displayTitle,
       ),
       _ => Text(model.value.toString()),
     };
@@ -241,29 +232,6 @@ class _ArgumentViewState extends State<ArgumentView> {
           ? null
           : (isSingleLine ? _focusNode.unfocus : null),
       onChanged: onChanged ?? _scheduleStringChange,
-    );
-  }
-
-  Widget _buildPicker(Widget picker, String? errorText, {bool enabled = true}) {
-    return IgnorePointer(
-      ignoring: !enabled,
-      child: Opacity(
-        opacity: enabled ? 1 : 0.6,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            picker,
-            if (errorText != null && errorText.isNotEmpty)
-              Text(
-                errorText,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                  fontSize: 12,
-                ),
-              ).padding(top: 4),
-          ],
-        ),
-      ),
     );
   }
 

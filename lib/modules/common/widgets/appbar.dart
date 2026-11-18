@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:styled_widget/styled_widget.dart';
 
 import 'package:oasx/modules/common/widgets/title.dart';
 import 'package:oasx/modules/common/widgets/windows_caption_bar.dart';
@@ -76,20 +75,11 @@ PreferredSizeWidget _webAppbar(
   String? routePath,
   List<Widget> trailingActions = const [],
 }) {
-  return PreferredSize(
-    preferredSize: const Size.fromHeight(90),
-    child: Row(
-      children: [
-        Expanded(
-          child: getTitle(
-            context,
-            routePath: routePath,
-          ).padding(left: 16, top: 10, bottom: 10),
-        ),
-        ...trailingActions,
-        if (trailingActions.isNotEmpty) const SizedBox(width: 8),
-      ],
-    ),
+  return AppBar(
+    automaticallyImplyLeading: false,
+    centerTitle: false,
+    title: getTitle(context, routePath: routePath),
+    actions: trailingActions.isEmpty ? null : trailingActions,
   );
 }
 

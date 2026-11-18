@@ -22,7 +22,7 @@ class SettingItem extends StatelessWidget {
                 children: [
                   left,
                   const SizedBox(height: 4),
-                  Align(alignment: Alignment.centerRight, child: right),
+                  Align(alignment: AlignmentDirectional.centerStart, child: right),
                 ],
               )
             : Row(

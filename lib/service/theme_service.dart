@@ -8,7 +8,7 @@ import 'package:oasx/service/system_tray_service.dart';
 class ThemeService extends GetxService {
   final _storage = GetStorage();
   final _dark = false.obs;
-  final _color = ColorSeed.baseColor.color.obs;
+  final _color = workbenchSeed.obs;
 
   bool get isDarkMode => _dark.value;
   Color get color => _color.value;

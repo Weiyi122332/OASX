@@ -5,9 +5,6 @@ import 'package:window_manager/window_manager.dart';
 
 import 'package:oasx/modules/common/widgets/title.dart';
 
-const double _compactActionBaseThreshold = 280;
-const double _compactActionWidth = 48;
-
 class WindowsCaptionBar extends StatefulWidget implements PreferredSizeWidget {
   const WindowsCaptionBar({
     super.key,
@@ -84,42 +81,25 @@ class _WindowsCaptionBarState extends State<WindowsCaptionBar>
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(left: 16),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final hideTrailingActions = _shouldHideTrailingActions(
-                    constraints.maxWidth,
-                  );
-                  return Row(
-                    children: [
-                      if (widget.onMenuPressed != null)
-                        IconButton(
-                          icon: const Icon(Icons.menu),
-                          onPressed: widget.onMenuPressed,
-                          visualDensity: VisualDensity.compact,
-                          constraints: const BoxConstraints.tightFor(
-                            width: 40,
-                            height: 40,
-                          ),
-                        ),
-                      Expanded(
-                        child: DragToMoveArea(
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: getTitle(
-                              context,
-                              routePath: widget.routePath,
-                            ),
-                          ),
-                        ),
+              child: Row(
+                children: [
+                  if (widget.onMenuPressed != null)
+                    IconButton(
+                      icon: const Icon(Icons.menu),
+                      onPressed: widget.onMenuPressed,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  Expanded(
+                    child: DragToMoveArea(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: getTitle(context, routePath: widget.routePath),
                       ),
-                      if (!hideTrailingActions &&
-                          widget.trailingActions.isNotEmpty)
-                        const SizedBox(width: 8),
-                      if (!hideTrailingActions) ...widget.trailingActions,
-                      const SizedBox(width: 8),
-                    ],
-                  );
-                },
+                    ),
+                  ),
+                  ...widget.trailingActions,
+                  const SizedBox(width: 8),
+                ],
               ),
             ),
           ),
@@ -130,16 +110,6 @@ class _WindowsCaptionBarState extends State<WindowsCaptionBar>
         ],
       ),
     );
-  }
-
-  bool _shouldHideTrailingActions(double maxWidth) {
-    if (widget.trailingActions.isEmpty) {
-      return false;
-    }
-    final threshold =
-        _compactActionBaseThreshold +
-        (widget.trailingActions.length * _compactActionWidth);
-    return maxWidth <= threshold;
   }
 }
 

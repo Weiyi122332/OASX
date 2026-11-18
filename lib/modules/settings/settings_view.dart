@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 
+import 'package:oasx/modules/common/widgets/workbench_select.dart';
 import 'package:oasx/modules/common/widgets/appbar.dart';
 import 'package:oasx/modules/settings/oas_card.dart';
 import 'package:oasx/modules/settings/settings_leave_handler.dart';
@@ -23,7 +24,7 @@ class SettingsView extends StatefulWidget {
 }
 
 class _SettingsViewState extends State<SettingsView> {
-  static const double _layoutSpacing = 8.0;
+  static const double _layoutSpacing = 12.0;
   static const double _wideLayoutBreakpoint = 960.0;
   static const double _navWidth = 220.0;
   static const double _topAlignmentTolerance = 12.0;
@@ -32,24 +33,24 @@ class _SettingsViewState extends State<SettingsView> {
   final GlobalKey _scrollViewKey = GlobalKey();
   late final List<_SettingsSection> _sections = [
     _SettingsSection(
-      key: GlobalKey(),
-      navTitleBuilder: () => '插画设置',
-      cardBuilder: () => const IllustrationSettingsCard(),
-    ),
-    _SettingsSection(
-      key: GlobalKey(),
+      icon: Icons.manage_accounts_outlined,
       navTitleBuilder: () => I18n.userSetting.tr,
       cardBuilder: () => const UserSettingsCard(),
     ),
     _SettingsSection(
-      key: GlobalKey(),
-      navTitleBuilder: () => 'OAS${I18n.setting.tr}',
+      icon: Icons.dns_outlined,
+      navTitleBuilder: () => 'OAS ${I18n.setting.tr}',
       cardBuilder: () => const OasSettingsCard(),
     ),
     _SettingsSection(
-      key: GlobalKey(),
+      icon: Icons.tune_rounded,
       navTitleBuilder: () => I18n.systemSetting.tr,
       cardBuilder: () => const SystemSettingsCard(),
+    ),
+    _SettingsSection(
+      icon: Icons.image_outlined,
+      navTitleBuilder: () => I18n.illustrationSettings.tr,
+      cardBuilder: () => const IllustrationSettingsCard(),
     ),
   ];
 
@@ -88,7 +89,26 @@ class _SettingsViewState extends State<SettingsView> {
           final settingList = _buildSettingList(keyboardInset);
 
           if (!isWide) {
-            return settingList.paddingOnly(left: 8, right: 8, top: 8);
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
+                    child: WorkbenchSelect<int>(
+                      options: Iterable<int>.generate(_sections.length),
+                      value: _selectedSectionIndex ?? 0,
+                      optionLabel: (index) =>
+                          _sections[index].navTitleBuilder(),
+                      leadingIcon: _sections[_selectedSectionIndex ?? 0].icon,
+                      semanticLabel: I18n.setting.tr,
+                      onChanged: _scrollToSection,
+                    ),
+                  ),
+                  Expanded(child: settingList),
+                ],
+              ),
+            );
           }
 
           return Row(
@@ -241,51 +261,46 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
+  Widget _sectionLabel(BuildContext context, _SettingsSection section) {
+    return Row(
+      children: [
+        Icon(
+          section.icon,
+          size: 20,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            section.navTitleBuilder(),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildPrimaryNav() {
+    final colors = Theme.of(context).colorScheme;
     return SizedBox(
       width: _navWidth,
       child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
+        child: ListView(
+          shrinkWrap: true,
           padding: const EdgeInsets.all(8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: List.generate(_sections.length, (index) {
-              final isSelected = index == _selectedSectionIndex;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () => _scrollToSection(index),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOut,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: isSelected
-                          ? Theme.of(context).colorScheme.secondaryContainer
-                                .withValues(alpha: 0.38)
-                          : Colors.transparent,
-                    ),
-                    child: Text(
-                      _sections[index].navTitleBuilder(),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                      ),
-                    ),
-                  ),
+          children: [
+            for (final (index, section) in _sections.indexed)
+              ListTile(
+                title: _sectionLabel(context, section),
+                selected: index == _selectedSectionIndex,
+                selectedTileColor: colors.primaryContainer,
+                selectedColor: colors.onPrimaryContainer,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              );
-            }),
-          ),
+                onTap: () => _scrollToSection(index),
+              ),
+          ],
         ),
       ),
     );
@@ -294,12 +309,13 @@ class _SettingsViewState extends State<SettingsView> {
 
 class _SettingsSection {
   _SettingsSection({
-    required this.key,
+    required this.icon,
     required this.navTitleBuilder,
     required this.cardBuilder,
   });
 
-  final GlobalKey key;
+  final GlobalKey key = GlobalKey();
+  final IconData icon;
   final String Function() navTitleBuilder;
   final Widget Function() cardBuilder;
 }

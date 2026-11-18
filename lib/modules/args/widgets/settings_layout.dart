@@ -144,26 +144,20 @@ class _SettingsVariantPicker extends StatelessWidget {
   Widget build(BuildContext context) => Obx(() {
     final selections = controller._selectedSettingsVariants;
     final previous = selections[section];
-    final selected = variants.any((variant) => variant.id == previous)
+    final titles = {for (final variant in variants) variant.id: variant.title};
+    final selected = titles.containsKey(previous)
         ? previous!
         : variants.first.id;
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: DropdownButton<String>(
-            isExpanded: true,
+          child: WorkbenchSelect<String>(
+            options: titles.keys,
             value: selected,
-            onChanged: (value) {
-              if (value != null) selections[section] = value;
-            },
-            items: [
-              for (final variant in variants)
-                DropdownMenuItem(
-                  value: variant.id,
-                  child: Text(variant.title, overflow: TextOverflow.ellipsis),
-                ),
-            ],
+            optionLabel: (id) => titles[id]!,
+            leadingIcon: Icons.tune_rounded,
+            onChanged: (id) => selections[section] = id,
           ),
         ),
         for (final variant in variants)

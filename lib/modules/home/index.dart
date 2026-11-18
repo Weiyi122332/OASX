@@ -15,9 +15,10 @@ import 'package:oasx/utils/platform_utils.dart';
 part 'home_view_actions.dart';
 
 class HomeView extends StatefulWidget {
-  const HomeView({super.key, this.standalone = true});
+  const HomeView({super.key, this.standalone = true, this.onOpenSettings});
 
   final bool standalone;
+  final VoidCallback? onOpenSettings;
 
   @override
   State<HomeView> createState() => _HomeViewState();
@@ -28,6 +29,15 @@ class _HomeViewState extends State<HomeView> {
   final controller = Get.find<HomeDashboardController>();
   bool _isAddingScript = false;
   bool _isRefreshingScripts = false;
+
+  void _openSettings() {
+    final open = widget.onOpenSettings;
+    if (open != null) {
+      open();
+    } else {
+      Get.toNamed('/settings');
+    }
+  }
 
   void _setAddingScript(bool value) {
     if (!mounted) {
@@ -94,7 +104,7 @@ class _HomeViewState extends State<HomeView> {
             ? [
                 IconButton(
                   tooltip: I18n.setting.tr,
-                  onPressed: () => Get.toNamed('/settings'),
+                  onPressed: _openSettings,
                   icon: const Icon(Icons.settings_rounded),
                 ),
               ]
@@ -116,29 +126,30 @@ class _StartupLoadingOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: Colors.black.withValues(alpha: 0.25),
-      child: Center(
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(
-                  width: 36,
-                  height: 36,
-                  child: CircularProgressIndicator(),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  message.tr,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                if (autoDeploying) const _AutoDeployStatusView(),
-              ],
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox.square(
+                    dimension: 32,
+                    child: CircularProgressIndicator(strokeWidth: 3),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    message.tr,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  if (autoDeploying) const _AutoDeployStatusView(),
+                ],
+              ),
             ),
           ),
         ),

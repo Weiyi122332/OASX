@@ -34,7 +34,11 @@ class LogCenterLogText extends StatelessWidget {
         text: TextSpan(
           style: style,
           children: richText
-              ? _LogTextSpanBuilder(line, style).build()
+              ? _LogTextSpanBuilder(
+                  line,
+                  style,
+                  Theme.of(context).colorScheme,
+                ).build()
               : [TextSpan(text: line)],
         ),
         selectionRegistrar: SelectionContainer.maybeOf(context),

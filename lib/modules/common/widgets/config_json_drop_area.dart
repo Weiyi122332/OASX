@@ -36,7 +36,7 @@ class _ConfigJsonDropAreaState extends State<ConfigJsonDropArea> {
       onDropEnded: (_) => _setDragging(false),
       onPerformDrop: _onPerformDrop,
       child: InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         onTap: widget.enabled ? _pickFile : null,
         child: DecoratedBox(
           decoration: _decoration(theme),
@@ -50,13 +50,13 @@ class _ConfigJsonDropAreaState extends State<ConfigJsonDropArea> {
     return BoxDecoration(
       color: _dragging
           ? theme.colorScheme.primaryContainer.withValues(alpha: 0.28)
-          : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.34),
+          : theme.colorScheme.surfaceContainerLow,
       border: Border.all(
         color: _dragging
             ? theme.colorScheme.primary
             : theme.colorScheme.outlineVariant,
       ),
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(12),
     );
   }
 

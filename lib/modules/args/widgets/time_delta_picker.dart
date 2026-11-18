@@ -2,7 +2,15 @@
 part of args;
 
 class TimeDeltaPicker extends DateTimePickerBase {
-  TimeDeltaPicker({super.key, required super.value, required super.onChange});
+  TimeDeltaPicker({
+    super.key,
+    required super.value,
+    required super.onChange,
+    super.fieldIcon,
+    super.enabled,
+    super.semanticLabel,
+    super.errorText,
+  });
 
   @override
   State<StatefulWidget> createState() => TimeDeltaPickerState();
@@ -13,9 +21,7 @@ class TimeDeltaPickerState extends DateTimePickerBaseState {
   void showPicker(context, dynamic value) {
     Pickers.showMultiPicker(
       context,
-      pickerStyle: Theme.of(context).brightness == Brightness.light
-          ? DefaultPickerStyle()
-          : DefaultPickerStyle.dark(),
+      pickerStyle: pickerStyle(context),
       data: dateTimeDelta,
       selectData: prePrecess(value),
       onConfirm: onConfirm,

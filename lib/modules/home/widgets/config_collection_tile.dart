@@ -45,66 +45,73 @@ class ConfigCollectionTile extends StatelessWidget {
               (showLinkCheckbox ? 64 : 0);
           final isCompact = constraints.maxWidth < compactThreshold;
           final rowColor = isActive
-              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.24)
-              : theme.cardColor;
+              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.55)
+              : Colors.transparent;
           final accentColor = _accentColor(
             context,
             controller.scriptCollectionStateFor(script),
           );
-          return Material(
-            color: rowColor,
-            child: InkWell(
-              onTap: isDragCopyLoading ? null : onTap,
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: isCompact ? 8 : 10,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (showLinkCheckbox) ...[
-                      SizedBox(
-                        width: 36,
-                        height: 36,
-                        child: Checkbox(
-                          value: isLinked,
-                          onChanged: (value) => controller.setScriptLinked(
-                            script.name,
-                            value ?? false,
+          return Semantics(
+            selected: isActive,
+            child: Material(
+              color: rowColor,
+              borderRadius: BorderRadius.circular(12),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: isDragCopyLoading ? null : onTap,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: isCompact ? 8 : 10,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (showLinkCheckbox) ...[
+                        SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: Checkbox(
+                            value: isLinked,
+                            onChanged: (value) => controller.setScriptLinked(
+                              script.name,
+                              value ?? false,
+                            ),
+                            visualDensity: VisualDensity.compact,
                           ),
-                          visualDensity: VisualDensity.compact,
+                        ),
+                        const SizedBox(width: 2),
+                      ],
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            AbsorbPointer(
+                              absorbing: isDragCopyLoading,
+                              child: _ScriptMeta(
+                                script: script,
+                                compact: isCompact,
+                                accentColor: accentColor,
+                                powerButton: _PowerButton(
+                                  running:
+                                      script.state.value == ScriptState.running,
+                                  onTogglePower: onTogglePower,
+                                ),
+                                popupButton: _ActionMenuButton(
+                                  onRename: onRename,
+                                  onExport: onExport,
+                                  onDelete: onDelete,
+                                ),
+                              ),
+                            ),
+                            if (isDragCopyLoading)
+                              const Positioned.fill(
+                                child: _DragCopyLoadingMask(),
+                              ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 2),
                     ],
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          AbsorbPointer(
-                            absorbing: isDragCopyLoading,
-                            child: _ScriptMeta(
-                              script: script,
-                              compact: isCompact,
-                              accentColor: accentColor,
-                              powerButton: _PowerButton(
-                                onTogglePower: onTogglePower,
-                              ),
-                              popupButton: _ActionMenuButton(
-                                onRename: onRename,
-                                onExport: onExport,
-                                onDelete: onDelete,
-                              ),
-                            ),
-                          ),
-                          if (isDragCopyLoading)
-                            const Positioned.fill(
-                              child: _DragCopyLoadingMask(),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -234,7 +241,7 @@ class _RegularAccentBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 6,
+      width: 4,
       height: double.infinity,
       child: Center(
         child: FractionallySizedBox(
@@ -253,19 +260,26 @@ class _RegularAccentBar extends StatelessWidget {
 }
 
 class _PowerButton extends StatelessWidget {
-  const _PowerButton({required this.onTogglePower});
+  const _PowerButton({required this.onTogglePower, required this.running});
+
+  final bool running;
 
   final VoidCallback onTogglePower;
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
+      tooltip: running ? I18n.stop.tr : I18n.run.tr,
       onPressed: onTogglePower,
       visualDensity: VisualDensity.compact,
       constraints: const BoxConstraints.tightFor(width: 32, height: 32),
       padding: EdgeInsets.zero,
       iconSize: 23,
-      icon: const Icon(Icons.power_settings_new_rounded),
+      icon: Icon(
+        running
+            ? Icons.stop_circle_outlined
+            : Icons.play_circle_outline_rounded,
+      ),
     );
   }
 }
@@ -287,7 +301,7 @@ class _ActionMenuButton extends StatelessWidget {
       dimension: 32,
       child: PopupMenuButton<String>(
         padding: EdgeInsets.zero,
-        tooltip: '',
+        tooltip: I18n.homeMoreActions.tr,
         icon: const Icon(Icons.more_vert_rounded, size: 18),
         onSelected: (value) async {
           if (value == 'rename') {

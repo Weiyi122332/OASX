@@ -11,7 +11,6 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:oasx/api/api_client.dart';
 import 'package:oasx/api/api_interceptor.dart';
-import 'package:oasx/modules/home/widgets/action_path_card.dart';
 import 'package:oasx/modules/home/widgets/log_center_panel.dart';
 import 'package:oasx/modules/log/log_browser_models.dart';
 import 'package:oasx/modules/log/script_log_browser_controller.dart';
@@ -193,7 +192,6 @@ void main() {
       _image('first.png'),
       _image('second.png'),
     ]);
-    expect(find.byType(ActionPathCard), findsNothing);
     expect(find.byType(LogCenterErrorImageCard), findsNWidgets(2));
     expect(find.byType(Image), findsNWidgets(2));
     expect(find.byIcon(Icons.download_rounded), findsNWidgets(2));

@@ -7,11 +7,12 @@ import 'package:expansion_tile_group/expansion_tile_group.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_pickers/pickers.dart';
-import 'package:flutter_pickers/style/default_style.dart';
+import 'package:flutter_pickers/style/picker_style.dart';
 import 'package:flutter_pickers/time_picker/model/date_mode.dart';
 import 'package:flutter_pickers/time_picker/model/pduration.dart';
 import 'package:flutter_pickers/time_picker/model/suffix.dart';
 import 'package:get/get.dart';
+import 'package:oasx/modules/common/widgets/workbench_select.dart';
 import 'package:oasx/api/api_client.dart';
 import 'package:oasx/config/constants.dart';
 import 'package:oasx/modules/common/models/config_drag_payload.dart';
@@ -90,80 +91,70 @@ class Args extends StatelessWidget {
         final selectedTask = (taskName ?? Get.parameters['task'] ?? '').trim();
         final groupNames = controller.groupsName.value;
         final panels = _settingsPanels(controller.groupsData.value, groupNames);
-        final content = LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                child: ExpansionTileGroup(
-                  spaceBetweenItem: 10,
-                  children: panels.map((panel) {
-                    final singleGroup = panel.groups.length == 1
-                        ? panel.groups.single.name
-                        : null;
-                    return ExpansionTileItem(
-                      key: ValueKey<String>(
-                        'args-group-$selectedScript-$selectedTask-${panel.id}',
-                      ),
-                      initiallyExpanded: true,
-                      isHasTopBorder: false,
-                      isHasBottomBorder: false,
-                      backgroundColor: _groupBackgroundColor(
+        final content = SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+          child: ExpansionTileGroup(
+            spaceBetweenItem: 10,
+            children: panels.map((panel) {
+              final singleGroup = panel.groups.length == 1
+                  ? panel.groups.single.name
+                  : null;
+              return ExpansionTileItem(
+                key: ValueKey<String>(
+                  'args-group-$selectedScript-$selectedTask-${panel.id}',
+                ),
+                initiallyExpanded: true,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardTheme.color,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                ),
+                title: Row(
+                  children: [
+                    if (groupDraggable && singleGroup != null)
+                      _buildGroupDragHandle(
                         context,
                         selectedScript,
                         selectedTask,
-                        panel.id,
+                        singleGroup,
                       ),
-                      borderRadius: const BorderRadius.all(Radius.circular(10)),
-                      title:
-                          <Widget>[
-                            if (groupDraggable && singleGroup != null)
-                              _buildGroupDragHandle(
-                                context,
-                                selectedScript,
-                                selectedTask,
-                                singleGroup,
-                              ),
-                            Text(panel.title),
-                          ].toRow(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                          ),
-                      children: panel.variants.isEmpty
-                          ? _panelFields(
+                    Flexible(
+                      child: Text(
+                        panel.title,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                  ],
+                ),
+                children: panel.variants.isEmpty
+                    ? _panelFields(
+                        context,
+                        panel,
+                        selectedScript,
+                        selectedTask,
+                        showGroupHandles: singleGroup == null,
+                      )
+                    : [
+                        _SettingsVariantPicker(
+                          controller: controller,
+                          section: (selectedScript, selectedTask, panel.id),
+                          variants: panel.variants,
+                          buildFields: (variant) => Column(
+                            children: _panelFields(
                               context,
-                              panel,
+                              variant,
                               selectedScript,
                               selectedTask,
-                              showGroupHandles: singleGroup == null,
-                            )
-                          : [
-                              _SettingsVariantPicker(
-                                controller: controller,
-                                section: (
-                                  selectedScript,
-                                  selectedTask,
-                                  panel.id,
-                                ),
-                                variants: panel.variants,
-                                buildFields: (variant) => Column(
-                                  children: _panelFields(
-                                    context,
-                                    variant,
-                                    selectedScript,
-                                    selectedTask,
-                                    showGroupHandles: false,
-                                  ),
-                                ),
-                              ),
-                            ],
-                    );
-                  }).toList(),
-                ),
-              ),
-            );
-          },
+                              showGroupHandles: false,
+                            ),
+                          ),
+                        ),
+                      ],
+              );
+            }).toList(),
+          ),
         );
         if (!stagingMode) {
           return content;
@@ -241,17 +232,6 @@ class Args extends StatelessWidget {
       );
     }
     return result;
-  }
-
-  Color _groupBackgroundColor(
-    BuildContext context,
-    String selectedScript,
-    String selectedTask,
-    String groupName,
-  ) {
-    return Theme.of(
-      context,
-    ).colorScheme.secondaryContainer.withValues(alpha: 0.24);
   }
 
   Widget _buildGroupDragHandle(

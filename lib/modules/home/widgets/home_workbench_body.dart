@@ -358,7 +358,7 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.blueAccent.withValues(alpha: 0.45 + progress * 0.35),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.45 + progress * 0.35),
           width: 1.5,
         ),
       ),
@@ -394,9 +394,9 @@ class _WorkbenchDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dividerColor = Theme.of(context).colorScheme.outlineVariant;
+    final colors = Theme.of(context).colorScheme;
     final highlightColor =
-        Colors.blueAccent.withValues(alpha: 0.12 + collapseProgress * 0.22);
+        colors.primary.withValues(alpha: 0.12 + collapseProgress * 0.22);
     return MouseRegion(
       cursor: SystemMouseCursors.resizeColumn,
       child: GestureDetector(
@@ -431,10 +431,11 @@ class _WorkbenchDivider extends StatelessWidget {
                 ),
               Center(
                 child: Container(
-                  width: 2,
+                  width: 3,
+                  height: 40,
                   decoration: BoxDecoration(
                     color:
-                        collapseSide == null ? dividerColor : Colors.blueAccent,
+                        collapseSide == null ? colors.outlineVariant : colors.primary,
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),

@@ -23,8 +23,6 @@ class TaskListEditor extends StatelessWidget {
   final bool enabled;
   final int? maxCount;
 
-  static const double _menuMaxHeight = 288;
-
   bool get _isFull => maxCount != null && value.length >= maxCount!;
 
   /// 还没加进来的任务（已经加过的不再出现在「新增任务」里）。
@@ -64,7 +62,7 @@ class TaskListEditor extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         I18n.argsTaskListEmpty.tr,
@@ -91,8 +89,8 @@ class TaskListEditor extends StatelessWidget {
       key: ValueKey<String>('task-list-$task'),
       margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(4),
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
@@ -101,11 +99,13 @@ class TaskListEditor extends StatelessWidget {
             child: enabled
                 ? ReorderableDragStartListener(
                     index: index,
-                    child: const Icon(Icons.drag_indicator_outlined)
-                        .paddingSymmetric(horizontal: 6, vertical: 10),
+                    child: const Icon(
+                      Icons.drag_indicator_outlined,
+                    ).paddingSymmetric(horizontal: 6, vertical: 10),
                   )
-                : const Icon(Icons.drag_indicator_outlined)
-                    .paddingSymmetric(horizontal: 6, vertical: 10),
+                : const Icon(
+                    Icons.drag_indicator_outlined,
+                  ).paddingSymmetric(horizontal: 6, vertical: 10),
           ),
           Expanded(
             child: Text(
@@ -127,53 +127,24 @@ class TaskListEditor extends StatelessWidget {
   }
 
   Widget _buildFooter(BuildContext context) {
-    final canAdd = enabled && !_isFull && _remaining.isNotEmpty;
-    final counter =
-        maxCount == null ? '${value.length}' : '${value.length}/$maxCount';
+    final remaining = _remaining;
+    final canAdd = enabled && !_isFull && remaining.isNotEmpty;
+    final counter = maxCount == null
+        ? '${value.length}'
+        : '${value.length}/$maxCount';
     return Row(
       children: [
-        MenuAnchor(
-          menuChildren: [
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: _menuMaxHeight),
-              child: Scrollbar(
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: _remaining
-                        .map(
-                          (option) => MenuItemButton(
-                            onPressed: () => _onAdd(option),
-                            child: Text(
-                              option.tr,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        )
-                        .toList(growable: false),
-                  ),
-                ),
-              ),
-            ),
-          ],
-          builder: (context, controller, child) {
-            return OutlinedButton.icon(
-              onPressed: canAdd
-                  ? () => controller.isOpen
-                      ? controller.close()
-                      : controller.open()
-                  : null,
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: Text(I18n.argsTaskListAdd.tr),
-            );
-          },
+        Expanded(
+          child: WorkbenchSelect<String>(
+            options: remaining,
+            optionLabel: (task) => task.tr,
+            hintText: I18n.argsTaskListAdd.tr,
+            leadingIcon: Icons.add_rounded,
+            onChanged: canAdd ? _onAdd : null,
+          ),
         ),
         const SizedBox(width: 8),
-        Text(
-          counter,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text(counter, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }

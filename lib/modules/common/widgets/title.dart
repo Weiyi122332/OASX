@@ -36,16 +36,28 @@ class HomeTitleBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 5),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset('assets/images/Icon-app.png', height: 30, width: 30),
-          const SizedBox(width: 14),
-          Flexible(child: _TitleLabel(text: 'OASX / ${I18n.home.tr}')),
-        ],
-      ),
+    final icon = Image.asset(
+      'assets/images/Icon-app.png',
+      height: 30,
+      width: 30,
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 110) {
+          return Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: icon,
+          );
+        }
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            icon,
+            const SizedBox(width: 12),
+            Flexible(child: _TitleLabel(text: 'OASX / ${I18n.home.tr}')),
+          ],
+        );
+      },
     );
   }
 }

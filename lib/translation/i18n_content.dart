@@ -74,6 +74,7 @@ class I18n {
       deployFileExportSuccess = 'deploy_file_export_success',
       deployFileExportFailed = 'deploy_file_export_failed',
       rename = 'Rename';
+  static const String close = 'Close';
   static const String delete = 'Delete', cancel = 'Cancel', confirm = 'Confirm';
   static const String retry = 'Retry',
       back = 'Back',
@@ -164,7 +165,14 @@ class I18n {
       homeLoadingConfigDetail = 'home_loading_config_detail';
   static const String homeScriptAbnormal = 'home_script_abnormal',
       homeScriptOffline = 'home_script_offline',
-      homeScriptSearchHint = 'home_script_search_hint';
+      homeScriptSearchHint = 'home_script_search_hint',
+      homeFilterByState = 'home_filter_by_state',
+      homeFilterAll = 'home_filter_all',
+      homeNoMatchingConfigs = 'home_no_matching_configs',
+      homeResetFilters = 'home_reset_filters',
+      homeDisconnected = 'home_disconnected',
+      homeMoreActions = 'home_more_actions',
+      illustrationSettings = 'illustration_settings';
   static const String homeSortByStatus = 'home_sort_by_status',
       homeSortByName = 'home_sort_by_name',
       homeNoScriptSelected = 'home_no_script_selected',
@@ -189,19 +197,6 @@ class I18n {
       resourcePartial = 'resource_partial',
       resourceRefresh = 'resource_refresh',
       resourceReadFailed = 'resource_read_failed',
-      homeAnalysisTab = 'home_analysis_tab',
-      homeAnalysisClicks = 'home_analysis_clicks',
-      homeAnalysisRandomClicks = 'home_analysis_random_clicks',
-      homeAnalysisTasks = 'home_analysis_tasks',
-      homeAnalysisShowClicks = 'home_analysis_show_clicks',
-      homeAnalysisShowSwipes = 'home_analysis_show_swipes',
-      homeAnalysisShowPath = 'home_analysis_show_path',
-      homeAnalysisPathTitle = 'home_analysis_path_title',
-      homeAnalysisDensityTitle = 'home_analysis_density_title',
-      homeAnalysisTotalDensityTitle = 'home_analysis_total_density_title',
-      homeAnalysisDailyTrendTitle = 'home_analysis_daily_trend_title',
-      homeAnalysisRankingTitle = 'home_analysis_ranking_title',
-      homeAnalysisEmpty = 'home_analysis_empty',
       homeStatsGeneratedAt = 'home_stats_generated_at',
       homeStatsRetentionDays = 'home_stats_retention_days';
   static const String homeStatsToday = 'home_stats_today',
@@ -250,6 +245,8 @@ class I18n {
   homeStatsSummaryRunDuration = 'home_stats_summary_run_duration',
   homeStatsSummaryRunTaskCount = 'home_stats_summary_run_task_count',
   homeStatsSummaryTotalBattleCount = 'home_stats_summary_total_battle_count';
+  static const String homeStatsSortAscending = 'home_stats_sort_ascending',
+      homeStatsSortDescending = 'home_stats_sort_descending';
   static const String homeStatsSortByData = 'home_stats_sort_by_data',
       homeStatsSortByTime = 'home_stats_sort_by_time',
       homeStatsNoBattle = 'home_stats_no_battle';
@@ -307,6 +304,7 @@ class I18n {
       argsMinValue = 'args_min_value';
   static const String argsMaxValue = 'args_max_value',
       argsUnsavedPrompt = 'args_unsaved_prompt';
+  static const String argsChooseOptions = 'args_choose_options';
   static const String argsTaskListEmpty = 'args_task_list_empty',
       argsTaskListAdd = 'args_task_list_add',
       argsTaskListRemove = 'args_task_list_remove';

@@ -64,7 +64,6 @@ class _TaskJsonImportDialogState extends State<TaskJsonImportDialog> {
               decoration: InputDecoration(
                 hintText: I18n.taskJsonTextHint.tr,
                 hintStyle: Theme.of(context).textTheme.bodyMedium,
-                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),

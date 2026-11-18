@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:oasx/modules/common/widgets/workbench_select.dart';
 import 'package:oasx/modules/args/index.dart';
 
 class _ReloadingArgsController extends ArgsController {
@@ -202,7 +203,7 @@ void main() {
     expect(find.byType(TextField), findsOneWidget);
     expect(find.text('0'), findsOneWidget);
     await tester.enterText(find.byType(TextField), '3');
-    await tester.tap(find.byType(DropdownButton<String>));
+    await tester.tap(find.byType(WorkbenchSelect<String>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('月读').last);
     await tester.pumpAndSettle();
@@ -210,10 +211,10 @@ void main() {
     expect(find.byType(TextField), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
     await tester.enterText(find.byType(TextField), '5');
-    final picker = tester.widget<DropdownButton<String>>(
-      find.byType(DropdownButton<String>),
+    final picker = tester.widget<WorkbenchSelect<String>>(
+      find.byType(WorkbenchSelect<String>),
     );
-    picker.onChanged!(picker.items!.first.value);
+    picker.onChanged!(picker.options.first);
     await tester.pump();
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
@@ -247,7 +248,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final dropdown = find.byType(DropdownButton<String>);
+    final dropdown = find.byType(WorkbenchSelect<String>);
     await tester.tap(dropdown);
     await tester.pumpAndSettle();
     await tester.tap(find.text('月读').last);
@@ -266,7 +267,7 @@ void main() {
 
     expect(controller.revision.value, 1);
     expect(
-      tester.widget<DropdownButton<String>>(dropdown).value,
+      tester.widget<WorkbenchSelect<String>>(dropdown).selectedValues.single,
       'quick_presets-tsukuyomi_preset',
     );
     expect(find.text('5'), findsOneWidget);
@@ -293,7 +294,12 @@ void main() {
     expect(find.byType(Checkbox), findsOneWidget);
     expect(find.text('1,1'), findsOneWidget);
 
-    final rental = find.byType(DropdownButtonFormField<String>);
+    final rental = find.descendant(
+      of: find.byKey(
+        const ValueKey('args-fixture-MetaDemon-low_star_preset-rental_lineup'),
+      ),
+      matching: find.byType(WorkbenchSelect<String>),
+    );
     await tester.tap(rental);
     await tester.pumpAndSettle();
     await tester.tap(find.text('群体').last);

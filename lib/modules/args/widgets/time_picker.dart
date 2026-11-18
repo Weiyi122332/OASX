@@ -2,7 +2,15 @@
 part of args;
 
 class TimePicker extends DateTimePickerBase {
-  TimePicker({super.key, required super.value, required super.onChange});
+  TimePicker({
+    super.key,
+    required super.value,
+    required super.onChange,
+    super.fieldIcon,
+    super.enabled,
+    super.semanticLabel,
+    super.errorText,
+  });
 
   @override
   State<StatefulWidget> createState() => TimePickerState();
@@ -13,9 +21,7 @@ class TimePickerState extends DateTimePickerBaseState {
   void showPicker(context, dynamic value) {
     Pickers.showMultiPicker(
       context,
-      pickerStyle: Theme.of(context).brightness == Brightness.light
-          ? DefaultPickerStyle()
-          : DefaultPickerStyle.dark(),
+      pickerStyle: pickerStyle(context),
       data: dateTime,
       selectData: prePrecess(value),
       onConfirm: onConfirm,
